@@ -13,7 +13,6 @@ mapper:
 - input: 
     name: homie
     protocol: homie
-    match: .*
   output:
     name: volkszaehler
   map:

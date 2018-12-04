@@ -16,7 +16,7 @@ type Subscriber struct {
 	Devices   []*Device
 }
 
-func NewSubscriber(rootTopic string) *Subscriber {
+func NewSubscriber(rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
 		MqttConnector: &MqttConnector{},
 		rootTopic:     stripTrailingSlash(rootTopic),
@@ -24,10 +24,18 @@ func NewSubscriber(rootTopic string) *Subscriber {
 	}
 
 	// connection lost handler
-	// mqttOptions.SetOnConnectHandler(h.connectionHandler)
-	// mqttOptions.SetConnectionLostHandler(h.connectionLostHandler)
+	mqttOptions.SetOnConnectHandler(h.connectionHandler)
+	mqttOptions.SetConnectionLostHandler(h.connectionLostHandler)
 
 	return h
+}
+
+func (h *Subscriber) connectionHandler(client mqtt.Client) {
+	log.Println("mqtt: connected")
+}
+
+func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
+	log.Println("mqtt: disconnected")
 }
 
 func (h *Subscriber) Run() {

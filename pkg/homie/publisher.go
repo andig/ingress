@@ -2,6 +2,7 @@ package homie
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -39,20 +40,14 @@ func (h *Publisher) Publish() {
 	}
 }
 
-// func (h *Publisher) publishReady() {
-// 	topic := fmt.Sprintf("%s/%s/%s", h.rootTopic, h.dev.Name, propState)
-// 	go h.publish(topic, true, propStateReady)
-// }
-
 func (h *Publisher) connectionHandler(client mqtt.Client) {
-	// log.Println("mqtt: connected")
-	// h.publishReady()
+	log.Println("mqtt: connected")
 	topic := fmt.Sprintf("%s/%s/%s", h.rootTopic, h.dev.Name, propState)
 	go h.publish(topic, true, propStateReady)
 }
 
 func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
-	// log.Println("mqtt: disconnected")
+	log.Println("mqtt: disconnected")
 }
 
 func (h *Publisher) publish(topic string, retained bool, message interface{}) {

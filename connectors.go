@@ -52,8 +52,8 @@ func (c *Connectors)createInputConnector(i Input) {
 	switch i.Type {
 	case "homie":
 		mqttOptions := homie.NewMqttClientOptions(i.Url, i.User, i.Password)
+		homieSubscriber := homie.NewSubscriber("homie", mqttOptions)
 		mqttClient := mqtt.NewClient(mqttOptions)
-		homieSubscriber := homie.NewSubscriber("homie")
 		homieSubscriber.Connect(mqttClient)
 		homieSubscriber.Discover()
 		conn = homieSubscriber
