@@ -1,18 +1,29 @@
+# Input and output describe a list of input/output datasources.
+# All data sources are uniquely identified by their name.
+#
+# Valid input types:
+# - homie
+# - mqtt (planned)
 input:
 - name: homie
   type: homie
   # url: tcp://localhost:1883
   url: tcp://test.mosquitto.org:1883
 
+# Valid output types:
+# - volkszaehler
+# - volkszaehler-push (planned)
 output:
 - name: volkszaehler
   type: volkszaehler
   url: https://demo.volkszaehler.org/
   
+# Mapper configures how input and output data sources are connected.
+# Goal of the mapping is to provide a simple means of mapping large amounts of
+# input entities to their output
 mapper:
 - input: 
     name: homie
-    protocol: homie
   output:
     name: volkszaehler
   map:
