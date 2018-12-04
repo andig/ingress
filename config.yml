@@ -1,0 +1,21 @@
+input:
+- name: homie
+  type: homie
+  # url: tcp://localhost:1883
+  url: tcp://test.mosquitto.org:1883
+
+output:
+- name: volkszaehler
+  type: volkszaehler
+  url: https://demo.volkszaehler.org/
+  
+mapper:
+- input: 
+    name: homie
+    protocol: homie
+    match: .*
+  output:
+    name: volkszaehler
+  map:
+  - source: zaehlerstand
+    target: foobar

@@ -3,7 +3,7 @@ package homie
 import (
 	"fmt"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.mqtt.golang"
 )
 
 type Publisher struct {

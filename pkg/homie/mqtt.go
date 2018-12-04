@@ -4,8 +4,19 @@ import (
 	"log"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.mqtt.golang"
 )
+
+func NewMqttClientOptions(url string, user string, password string) *mqtt.ClientOptions {
+	mqttOptions := mqtt.NewClientOptions()
+	mqttOptions.AddBroker(url)
+	mqttOptions.SetUsername(user)
+	mqttOptions.SetPassword(password)
+	// mqttOptions.SetClientID(mqttClientID)
+	// mqttOptions.SetCleanSession(mqttCleanSession)
+	mqttOptions.SetAutoReconnect(true)
+	return mqttOptions
+}
 
 func stripTrailingSlash(s string) string {
 	if s[len(s)-1:] == "/" {
