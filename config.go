@@ -11,7 +11,7 @@ import (
 type Input struct {
 	Name     string
 	Type     string
-	Url      string
+	URL      string
 	User     string
 	Password string
 }
@@ -29,7 +29,6 @@ type Config struct {
 		Input struct {
 			Name     string
 			Protocol string
-			Match    string
 		}
 		Output struct {
 			Name     string

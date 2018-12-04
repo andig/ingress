@@ -30,16 +30,6 @@ func NewPublisher(rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions)
 	return h
 }
 
-func (h *Publisher) Publish() {
-	// h.publishReady()
-	for _, node := range h.dev.Nodes {
-		for _, property := range node.Properties {
-			topic := fmt.Sprintf("%s/%s/%s/%s/%s", h.rootTopic, h.dev.Name, node.Name, property.Name, propDatatype)
-			h.publish(topic, true, propDatatypeFloat)
-		}
-	}
-}
-
 func (h *Publisher) connectionHandler(client mqtt.Client) {
 	log.Println("mqtt: connected")
 	topic := fmt.Sprintf("%s/%s/%s", h.rootTopic, h.dev.Name, propState)
@@ -48,6 +38,16 @@ func (h *Publisher) connectionHandler(client mqtt.Client) {
 
 func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
 	log.Println("mqtt: disconnected")
+}
+
+func (h *Publisher) Publish() {
+	// h.publishReady()
+	for _, node := range h.dev.Nodes {
+		for _, property := range node.Properties {
+			topic := fmt.Sprintf("%s/%s/%s/%s/%s", h.rootTopic, h.dev.Name, node.Name, property.Name, propDatatype)
+			h.publish(topic, true, propDatatypeFloat)
+		}
+	}
 }
 
 func (h *Publisher) publish(topic string, retained bool, message interface{}) {

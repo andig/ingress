@@ -28,7 +28,7 @@ func Discover(vz *volkszaehler.Api, entities []volkszaehler.Entity) {
 	}
 }
 
-func NewConnectors(c Config) Connectors {
+func NewConnectors(c Config) *Connectors {
 	conn := Connectors{
 		Input: make(map[string]interface{}),
 		Output: make(map[string]interface{}),
@@ -41,7 +41,7 @@ func NewConnectors(c Config) Connectors {
 		conn.createOutputConnector(output)
 	}
 
-	return conn
+	return &conn
 }
 
 func (c *Connectors)createInputConnector(i Input) {
@@ -51,7 +51,7 @@ func (c *Connectors)createInputConnector(i Input) {
 	var conn interface{}
 	switch i.Type {
 	case "homie":
-		mqttOptions := homie.NewMqttClientOptions(i.Url, i.User, i.Password)
+		mqttOptions := homie.NewMqttClientOptions(i.URL, i.User, i.Password)
 		homieSubscriber := homie.NewSubscriber("homie", mqttOptions)
 		mqttClient := mqtt.NewClient(mqttOptions)
 		homieSubscriber.Connect(mqttClient)
