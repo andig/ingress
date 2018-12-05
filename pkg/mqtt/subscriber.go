@@ -20,8 +20,13 @@ type Subscriber struct {
 }
 
 func NewFromInputConfig(c config.Input) *Subscriber {
+	topic := c.Topic
+	if topic == "" {
+		topic = "#"
+	}
+
 	mqttOptions := NewMqttClientOptions(c.URL, c.User, c.Password)
-	mqttSubscriber := NewSubscriber("#", mqttOptions)
+	mqttSubscriber := NewSubscriber(topic, mqttOptions)
 	mqttClient := mqtt.NewClient(mqttOptions)
 	mqttSubscriber.Connect(mqttClient)
 

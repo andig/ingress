@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,8 +22,13 @@ type Subscriber struct {
 }
 
 func NewFromInputConfig(c config.Input) *Subscriber {
+	topic := c.Topic
+	if topic == "" {
+		topic = "homie"
+	}
+
 	mqttOptions := mq.NewMqttClientOptions(c.URL, c.User, c.Password)
-	homieSubscriber := NewSubscriber("homie", mqttOptions)
+	homieSubscriber := NewSubscriber(topic, mqttOptions)
 	mqttClient := mqtt.NewClient(mqttOptions)
 	homieSubscriber.Connect(mqttClient)
 	homieSubscriber.Discover()
@@ -76,21 +81,26 @@ func (h *Subscriber) Discover() {
 	topic := fmt.Sprintf("%s/+/+/+/%s", h.rootTopic, propDatatype)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		topic := msg.Topic()
-		if string(msg.Payload()) == "float" {
+		datatype := msg.Payload()
+
+		// strip datatype
+		segments := strings.Split(topic, "/")
+		topic = strings.Join(segments[:len(segments)-1], "/")
+
+		if string(datatype) == "float" {
 			h.discoverDevice(topic)
 		} else {
-			log.Printf("homie: unsupported datatype - ignoring %s", topic)
+			log.Printf("homie: unsupported datatype %s - ignoring %s", datatype, topic)
 		}
 	})
 }
 
 func (h *Subscriber) discoverDevice(topic string) {
-	re, _ := regexp.Compile(`^[a-z0-9]+/([a-z0-9]+)/([a-z0-9]+)/([a-z0-9]+)/?`)
-	matches := re.FindStringSubmatch(topic)
+	segments := strings.Split(topic, "/")
 
-	if len(matches) == 4 {
-		log.Printf("homie: discovered %s/%s/%s", matches[1], matches[2], matches[3])
-		h.mergeDevice(matches[1], matches[2], matches[3])
+	if len(segments) == 4 {
+		log.Printf("homie: discovered %s/%s/%s", segments[1], segments[2], segments[3])
+		h.mergeDevice(segments[1], segments[2], segments[3])
 	} else {
 		log.Printf("homie: discovered unexpected device %s", topic)
 	}

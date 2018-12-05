@@ -14,6 +14,7 @@ type Input struct {
 	URL      string
 	User     string
 	Password string
+	Topic    string
 }
 
 type Output struct {
