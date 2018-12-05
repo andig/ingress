@@ -100,7 +100,7 @@ func (api *Api) GetPublicEntities() []Entity {
 		return []Entity{}
 	}
 
-	er := EntityResponse{}
+	er := EntitiesResponse{}
 	if err := json.NewDecoder(r.Body).Decode(&er); err != nil {
 		log.Printf("json decode failed: %v", err)
 		return []Entity{}
@@ -116,7 +116,7 @@ func (api *Api) GetEntity(parent string) Entity {
 		return Entity{}
 	}
 
-	er := EntityResponse2{}
+	er := EntityResponse{}
 	if err := json.NewDecoder(r.Body).Decode(&er); err != nil {
 		log.Printf("json decode failed: %v", err)
 		return Entity{}

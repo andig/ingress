@@ -1,4 +1,4 @@
-package homie
+package mqtt
 
 import (
 	"log"
@@ -18,7 +18,7 @@ func NewMqttClientOptions(url string, user string, password string) *mqtt.Client
 	return mqttOptions
 }
 
-func stripTrailingSlash(s string) string {
+func StripTrailingSlash(s string) string {
 	if s[len(s)-1:] == "/" {
 		s = s[:len(s)-1]
 	}
@@ -26,14 +26,14 @@ func stripTrailingSlash(s string) string {
 }
 
 type MqttConnector struct {
-	mqttClient mqtt.Client
+	MqttClient mqtt.Client
 }
 
 func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
-	m.mqttClient = mqttClient
+	m.MqttClient = mqttClient
 
 	// connect
-	if token := m.mqttClient.Connect(); token.Wait() && token.Error() != nil {
+	if token := m.MqttClient.Connect(); token.Wait() && token.Error() != nil {
 		log.Fatal("MQTT: error connecting: ", token.Error())
 		panic(token.Error())
 	}

@@ -4,19 +4,26 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andig/ingress/pkg/config"
+	"github.com/andig/ingress/pkg/data"
+	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
 type Publisher struct {
-	*MqttConnector
+	*mq.MqttConnector
 	rootTopic string
 	dev       Device
 }
 
+func NewFromOutputConfig(c config.Output) *Publisher {
+	return nil
+}
+
 func NewPublisher(rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions) *Publisher {
 	h := &Publisher{
-		MqttConnector: &MqttConnector{},
-		rootTopic:     stripTrailingSlash(rootTopic),
+		MqttConnector: &mq.MqttConnector{},
+		rootTopic:     mq.StripTrailingSlash(rootTopic),
 		dev:           dev,
 	}
 
@@ -40,7 +47,11 @@ func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
 	log.Println("mqtt: disconnected")
 }
 
-func (h *Publisher) Publish() {
+func (h *Publisher) Discover() {
+	panic("not implemented")
+}
+
+func (h *Publisher) Publish(d data.Data) {
 	// h.publishReady()
 	for _, node := range h.dev.Nodes {
 		for _, property := range node.Properties {
@@ -51,7 +62,7 @@ func (h *Publisher) Publish() {
 }
 
 func (h *Publisher) publish(topic string, retained bool, message interface{}) {
-	token := h.mqttClient.Publish(topic, 1, retained, message)
+	token := h.MqttClient.Publish(topic, 1, retained, message)
 	h.WaitForToken(token)
 }
 

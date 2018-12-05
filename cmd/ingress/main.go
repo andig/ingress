@@ -4,15 +4,16 @@ import (
 	_ "log"
 	"time"
 
-	. "github.com/andig/ingress"
+	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/homie"
+	"github.com/andig/ingress/pkg/wiring"
 )
 
 func main() {
-	var c Config
+	var c config.Config
 	c.LoadConfig("config.yml")
 
-	connectors := NewConnectors(c)
+	connectors := wiring.NewConnectors(c)
 	_ = connectors
 
 	dev := &homie.Device{

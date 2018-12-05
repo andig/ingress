@@ -2,12 +2,12 @@ package volkszaehler
 
 import "encoding/json"
 
-type EntityResponse struct {
+type EntitiesResponse struct {
 	Version  string   `json:"version"`
 	Entities []Entity `json:"entities"`
 }
 
-type EntityResponse2 struct {
+type EntityResponse struct {
 	Version string `json:"version"`
 	Entity  Entity `json:"entity"`
 }

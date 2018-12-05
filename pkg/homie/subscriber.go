@@ -6,20 +6,31 @@ import (
 	"regexp"
 	"sync"
 
+	"github.com/andig/ingress/pkg/config"
+	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
 type Subscriber struct {
-	*MqttConnector
+	*mq.MqttConnector
 	rootTopic string
 	mux       sync.Mutex
 	Devices   []*Device
 }
 
+func NewFromInputConfig(c config.Input) *Subscriber {
+	mqttOptions := mq.NewMqttClientOptions(c.URL, c.User, c.Password)
+	homieSubscriber := NewSubscriber("homie", mqttOptions)
+	mqttClient := mqtt.NewClient(mqttOptions)
+	homieSubscriber.Connect(mqttClient)
+	homieSubscriber.Discover()
+	return homieSubscriber
+}
+
 func NewSubscriber(rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
-		MqttConnector: &MqttConnector{},
-		rootTopic:     stripTrailingSlash(rootTopic),
+		MqttConnector: &mq.MqttConnector{},
+		rootTopic:     mq.StripTrailingSlash(rootTopic),
 		Devices:       []*Device{},
 	}
 
@@ -40,14 +51,14 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 
 func (h *Subscriber) Run() {
 	topic := fmt.Sprintf("%s/+/+/+", h.rootTopic)
-	h.mqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		log.Printf("homie: received payload %s", msg.Payload())
 	})
 }
 
 func (h *Subscriber) Discover() {
 	topic := fmt.Sprintf("%s/+/+/+/%s", h.rootTopic, propDatatype)
-	h.mqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		topic := msg.Topic()
 		if string(msg.Payload()) == "float" {
 			h.discoverDevice(topic)
