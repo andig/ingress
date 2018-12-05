@@ -14,6 +14,8 @@ func main() {
 	c.LoadConfig("config.yml")
 
 	connectors := wiring.NewConnectors(c)
+	mapper := wiring.NewMapper(c.Mapper, connectors.Output)
+	go connectors.Run(mapper)
 	_ = connectors
 
 	dev := &homie.Device{

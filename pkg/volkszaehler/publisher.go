@@ -37,5 +37,6 @@ func (vz *Publisher) discoverEntities(entities []Entity) {
 }
 
 func (vz *Publisher) Publish(d data.Data) {
-	panic("not implemented")
+	log.Printf("volkszaehler: send (%s=%f)", d.Name, d.Value)
+	// panic("not implemented")
 }

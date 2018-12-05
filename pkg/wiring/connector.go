@@ -1,6 +1,7 @@
 package wiring
 
 import (
+	"log"
 	"sync"
 
 	"github.com/andig/ingress/pkg/config"
@@ -19,7 +20,7 @@ type Publisher interface {
 
 type Subscriber interface {
 	// NewFromInputConfig(c config.Input)
-	Run()
+	Run(receiver chan data.Data)
 }
 
 type SubscriberMap map[string]Subscriber
@@ -78,4 +79,29 @@ func (c *Connectors) createOutputConnector(o config.Output) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.Output[o.Name] = conn
+}
+
+// Run starts each subscriber's Run() function in a gofunc
+func (c *Connectors) Run(mapper *Mapper) {
+	for name, input := range c.Input {
+		c := make(chan data.Data)
+
+		// start distributor
+		go func(name string, c chan data.Data) {
+			log.Printf("connector: recv from %s", name)
+			for {
+				d := <-c
+				log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)
+				i := &data.InputData{
+					Source: name,
+					Data:   &d,
+				}
+
+				go mapper.Process(i)
+			}
+		}(name, c)
+
+		// start subscriber
+		go input.Run(c)
+	}
 }

@@ -22,24 +22,24 @@ type Output struct {
 	Url  string
 }
 
+type Mapping struct {
+	Input struct {
+		Name string
+	}
+	Output struct {
+		Name string
+	}
+	Map []struct {
+		Source string
+		Target string
+		Uuid   string
+	}
+}
+
 type Config struct {
 	Input  []Input
 	Output []Output
-	Mapper []struct {
-		Input struct {
-			Name     string
-			Protocol string
-		}
-		Output struct {
-			Name     string
-			Protocol string
-		}
-		Map []struct {
-			Source string
-			Target string
-			Uuid   string
-		}
-	}
+	Mapper []Mapping
 }
 
 func (c *Config) LoadConfig(file string) *Config {

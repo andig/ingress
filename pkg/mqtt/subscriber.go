@@ -3,9 +3,12 @@ package mqtt
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/andig/ingress/pkg/config"
+	"github.com/andig/ingress/pkg/data"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -47,11 +50,22 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 	log.Println("mqtt: disconnected")
 }
 
-func (h *Subscriber) Run() {
+func (h *Subscriber) Run(out chan data.Data) {
+	log.Printf("mqtt: started send for %s", h.rootTopic)
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	for {
+		time.Sleep(time.Duration(r.Int31n(1000)) * time.Millisecond)
+		data := data.Data{
+			Name:  "mqttSample",
+			Value: r.Float64(),
+		}
+		out <- data
+	}
 	panic("not implemented")
 
 	topic := fmt.Sprintf("%s/+/+/+", h.rootTopic)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		log.Printf("homie: received payload %s", msg.Payload())
+		log.Printf("mqtt: received payload %s", msg.Payload())
 	})
 }

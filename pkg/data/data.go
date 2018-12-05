@@ -5,3 +5,8 @@ type Data struct {
 	Name  string
 	Value float64
 }
+
+type InputData struct {
+	*Data
+	Source string
+}
