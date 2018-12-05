@@ -48,7 +48,8 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 }
 
 func (h *Subscriber) Run() {
-	panic("no implemented")
+	panic("not implemented")
+
 	topic := fmt.Sprintf("%s/+/+/+", h.rootTopic)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		log.Printf("homie: received payload %s", msg.Payload())

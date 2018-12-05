@@ -5,8 +5,10 @@ import (
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+
 	"github.com/andig/ingress/pkg/homie"
 	"github.com/andig/ingress/pkg/mqtt"
+	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
 type Publisher interface {
@@ -67,7 +69,7 @@ func (c *Connectors) createOutputConnector(o config.Output) {
 	var conn Publisher
 	switch o.Type {
 	case "volkszaehler":
-		conn = homie.NewFromOutputConfig(o)
+		conn = volkszaehler.NewFromOutputConfig(o)
 		break
 	case "default":
 		panic("Invalid output type: " + o.Type)

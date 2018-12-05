@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
+	"github.com/andig/ingress/pkg/data"
 )
 
 func NewFromOutputConfig(c config.Output) *Publisher {
@@ -33,4 +34,8 @@ func (vz *Publisher) discoverEntities(entities []Entity) {
 			vz.discoverEntities(children)
 		}
 	}
+}
+
+func (vz *Publisher) Publish(d data.Data) {
+	panic("not implemented")
 }
