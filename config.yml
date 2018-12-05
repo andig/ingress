@@ -33,12 +33,13 @@ wiring:
   output: 
   - volkszaehler
   mapping:
-  - namemapping
+  - direct
+  - namemapping2
 
 # Mapping configures which input topic is mapped to which output topics
 # Mappings are reusable across wirings
-# mapping:
-# - name: namemapping
-#   entries:
-#   - source: zaehlerstand
-#     target: foobar
+mapping:
+- name: direct
+  entries:
+  - source: zaehlerstand
+    target: foobar

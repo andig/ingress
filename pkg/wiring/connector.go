@@ -6,6 +6,7 @@ import (
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/telemetry"
 
 	"github.com/andig/ingress/pkg/homie"
 	"github.com/andig/ingress/pkg/mqtt"
@@ -34,19 +35,28 @@ type Connectors struct {
 
 // NewConnectors creates the input and output system connectors
 func NewConnectors(i []config.Input, o []config.Output) *Connectors {
-	conn := Connectors{
+	c := Connectors{
 		Input:  make(SubscriberMap),
 		Output: make(PublisherMap),
 	}
 
 	for _, input := range i {
-		conn.createInputConnector(input)
+		c.createInputConnector(input)
 	}
 	for _, output := range o {
-		conn.createOutputConnector(output)
+		c.createOutputConnector(output)
 	}
 
-	return &conn
+	// c.startTelmetry()
+
+	return &c
+}
+
+func (c *Connectors) startTelmetry() {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	telemetry := &telemetry.Telemetry{}
+	c.Input["telemetry"] = telemetry
 }
 
 func (c *Connectors) createInputConnector(i config.Input) {

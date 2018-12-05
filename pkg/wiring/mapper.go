@@ -2,6 +2,7 @@ package wiring
 
 import (
 	"log"
+	"strings"
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
@@ -21,12 +22,18 @@ type Mapper struct {
 // NewMapper creates data mapper that is able to Process() input messages by
 // sending them to configured output wires
 func NewMapper(c []config.Wiring, publisher PublisherMap) *Mapper {
-	log.Println(c)
 	wirings := make(wirings, 0)
 	for _, wiring := range c {
 		for _, input := range wiring.Inputs {
 			for _, output := range wiring.Outputs {
-				log.Printf("mapper: wiring %s -> %s", input, output)
+				mappings := wiring.Mapping
+				if len(mappings) == 0 {
+					mappings = []string{"auto"}
+				}
+
+				m := strings.Join(wiring.Mapping, ",")
+				log.Printf("mapper: wiring %s -> %s using %s", input, output, m)
+
 				wire := wire{input, output}
 				wirings = append(wirings, wire)
 			}
