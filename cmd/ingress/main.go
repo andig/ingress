@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "log"
+	"log"
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
@@ -9,15 +9,7 @@ import (
 	"github.com/andig/ingress/pkg/wiring"
 )
 
-func main() {
-	var c config.Config
-	c.LoadConfig("config.yml")
-
-	connectors := wiring.NewConnectors(c)
-	mapper := wiring.NewMapper(c.Mapper, connectors.Output)
-	go connectors.Run(mapper)
-	_ = connectors
-
+func inject() {
 	dev := &homie.Device{
 		Name: "meter1",
 		Nodes: []*homie.Node{
@@ -35,13 +27,20 @@ func main() {
 		},
 	}
 	_ = dev
+}
 
-	// mqttOptions := NewMqttClientOptions()
-	// homiePublisher := homie.NewPublisher("homie", *dev, mqttOptions) // refine mqtt client options
-	// mqttClient := mqtt.NewClient(mqttOptions)
-	// homiePublisher.Connect(mqttClient)
-	// homiePublisher.Publish()
-	// go homiePublisher.Run()
+func main() {
+	var c config.Config
+	c.LoadConfig("config.yml")
+	log.Println(c.Wiring)
+	log.Println(c.Mapping)
+
+	connectors := wiring.NewConnectors(c.Input, c.Output)
+	mapper := wiring.NewMapper(c.Wiring, connectors.Output)
+	go connectors.Run(mapper)
+
+	// test data
+	inject()
 
 	time.Sleep(3 * time.Second)
 }

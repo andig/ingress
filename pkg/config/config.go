@@ -22,24 +22,28 @@ type Output struct {
 	Url  string
 }
 
+type Wiring struct {
+	Inputs  []string `yaml:"input"`
+	Outputs []string `yaml:"output"`
+	Mapping []string `yaml:"mapping"`
+}
+
+type MapEntry struct {
+	Source string
+	Target string
+	Uuid   string
+}
+
 type Mapping struct {
-	Input struct {
-		Name string
-	}
-	Output struct {
-		Name string
-	}
-	Map []struct {
-		Source string
-		Target string
-		Uuid   string
-	}
+	Name string
+	Map  []MapEntry `yaml:"entries"`
 }
 
 type Config struct {
-	Input  []Input
-	Output []Output
-	Mapper []Mapping
+	Input   []Input
+	Output  []Output
+	Wiring  []Wiring  `yaml:"wiring"`
+	Mapping []Mapping `yaml:"mapping"`
 }
 
 func (c *Config) LoadConfig(file string) *Config {
@@ -53,11 +57,14 @@ func (c *Config) LoadConfig(file string) *Config {
 		log.Fatalf("Unmarshal: %v", err)
 	}
 
+	c.DumpConfig()
+	return c
+}
+
+func (c *Config) DumpConfig() {
 	d, err := yaml.Marshal(c)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 	fmt.Printf("--- dump:\n%s\n\n", string(d))
-
-	return c
 }

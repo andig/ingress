@@ -32,16 +32,17 @@ type Connectors struct {
 	Output PublisherMap
 }
 
-func NewConnectors(c config.Config) *Connectors {
+// NewConnectors creates the input and output system connectors
+func NewConnectors(i []config.Input, o []config.Output) *Connectors {
 	conn := Connectors{
 		Input:  make(SubscriberMap),
 		Output: make(PublisherMap),
 	}
 
-	for _, input := range c.Input {
+	for _, input := range i {
 		conn.createInputConnector(input)
 	}
-	for _, output := range c.Output {
+	for _, output := range o {
 		conn.createOutputConnector(output)
 	}
 

@@ -22,14 +22,23 @@ output:
   type: volkszaehler
   url: https://demo.volkszaehler.org/
   
-# Mapper configures how input and output data sources are connected.
-# Goal of the mapping is to provide a simple means of mapping large amounts of
-# input entities to their output
-mapper:
+# Wiring configures how input and output data sources are connected.
+# Goal of the wiring is to connect input and output data sources.
+# Multiple mappings can be assigned to a single wiring. If no mapping is defined,
+# the "auto" mapping is applied. Auto mapping works by matching topic names.
+wiring:
 - input: 
-    name: homie
-  output:
-    name: volkszaehler
-  map:
-  - source: zaehlerstand
-    target: foobar
+  - homie
+  - mqtt
+  output: 
+  - volkszaehler
+  mapping:
+  - namemapping
+
+# Mapping configures which input topic is mapped to which output topics
+# Mappings are reusable across wirings
+# mapping:
+# - name: namemapping
+#   entries:
+#   - source: zaehlerstand
+#     target: foobar

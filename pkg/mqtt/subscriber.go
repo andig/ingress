@@ -43,15 +43,15 @@ func NewSubscriber(rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscribe
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	log.Println("mqtt: connected")
+	log.Println("mqtt: connected to " + ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	log.Println("mqtt: disconnected")
+	log.Println("mqtt: disconnected from " + ServerFromClient(client))
 }
 
 func (h *Subscriber) Run(out chan data.Data) {
-	log.Printf("mqtt: started send for %s", h.rootTopic)
+	log.Printf("mqtt: subscribed to topic %s", h.rootTopic)
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	for {
