@@ -1,6 +1,7 @@
 package volkszaehler
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -38,5 +39,20 @@ func (vz *Publisher) discoverEntities(entities []Entity) {
 
 func (vz *Publisher) Publish(d data.Data) {
 	log.Printf("volkszaehler: send (%s=%f)", d.Name, d.Value)
-	// panic("not implemented")
+
+	ts := int64(time.Now().UnixNano() / 1e3)
+	val := fmt.Sprintf("%.3f", d.Value)
+	payload := fmt.Sprintf(`[
+		[%d,%s]
+	]`, ts, val)
+
+	id := d.ID
+	if id == "" {
+		id = d.Name
+	}
+	url := fmt.Sprintf("/data/%s.json", id)
+
+	if _, err := vz.Api.Post(url, payload); err != nil {
+		log.Printf("volkszaehler: send failed (%s)", err)
+	}
 }

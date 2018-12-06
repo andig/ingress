@@ -3,6 +3,7 @@ package wiring
 import (
 	"log"
 	"strings"
+	"sync/atomic"
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
@@ -17,6 +18,7 @@ type wirings []wire
 type Mapper struct {
 	wirings   []wire
 	publisher PublisherMap
+	inflight  int64 // number of inflight requests
 }
 
 // NewMapper creates data mapper that is able to Process() input messages by
@@ -63,7 +65,11 @@ func (m *Mapper) Process(d *data.InputData) {
 			log.Printf("mapper: routing %s -> %s ", wiring.input, wiring.output)
 
 			// publish async
-			go publisher.Publish(*d.Data)
+			go func(d *data.Data) {
+				atomic.AddInt64(&m.inflight, 1)
+				publisher.Publish(*d)
+				atomic.AddInt64(&m.inflight, -1)
+			}(d.Data)
 		}
 	}
 

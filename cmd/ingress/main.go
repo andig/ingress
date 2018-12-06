@@ -34,7 +34,7 @@ func main() {
 	go connectors.Run(mapper)
 
 	// test data
-	// inject()
+	inject()
 
 	time.Sleep(1 * time.Second)
 }

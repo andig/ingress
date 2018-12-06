@@ -194,3 +194,33 @@ func (api *Api) GetPrognosis(uuid string, period string) PrognosisStruct {
 
 	return pr.Prognosis
 }
+
+func (api *Api) Post(endpoint string, payload string) (*http.Response, error) {
+	url := api.url + endpoint
+
+	start := time.Now()
+	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Accept", "application/json")
+
+	resp, err := api.client.Do(req)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	duration := time.Now().Sub(start)
+	log.Printf("POST %s (%dms)", url, duration.Nanoseconds()/1e6)
+
+	if api.debug {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Print(err)
+		}
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		log.Print(string(body))
+	}
+
+	return resp, nil
+}
