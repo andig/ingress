@@ -60,12 +60,14 @@ func (m *Mapper) Process(d *data.InputData) {
 				continue
 			}
 
+			log.Printf("mapper: routing %s -> %s ", wiring.input, wiring.output)
+
 			// publish async
 			go publisher.Publish(*d.Data)
 		}
 	}
 
 	if !mapped {
-		log.Println("mapper: invalid source " + d.Source)
+		// log.Println("mapper: invalid source " + d.Source)
 	}
 }

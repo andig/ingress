@@ -12,17 +12,19 @@ import (
 
 type Publisher struct {
 	*mq.MqttConnector
+	name      string
 	rootTopic string
 	dev       Device
 }
 
 func NewFromOutputConfig(c config.Output) *Publisher {
-	return nil
+	panic("not implemented")
 }
 
-func NewPublisher(rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions) *Publisher {
+func NewPublisher(name string, rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions) *Publisher {
 	h := &Publisher{
 		MqttConnector: &mq.MqttConnector{},
+		name:          name,
 		rootTopic:     mq.StripTrailingSlash(rootTopic),
 		dev:           dev,
 	}
@@ -38,13 +40,13 @@ func NewPublisher(rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions)
 }
 
 func (h *Publisher) connectionHandler(client mqtt.Client) {
-	log.Println("mqtt: connected")
+	log.Println(h.name + ": connected")
 	topic := fmt.Sprintf("%s/%s/%s", h.rootTopic, h.dev.Name, propState)
 	go h.publish(topic, true, propStateReady)
 }
 
 func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
-	log.Println("mqtt: disconnected")
+	log.Println(h.name + ": disconnected")
 }
 
 func (h *Publisher) Discover() {

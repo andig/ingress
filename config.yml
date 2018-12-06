@@ -2,17 +2,19 @@
 # All data sources are uniquely identified by their name.
 #
 # Valid input types:
+# - telemetry (internal runtime data)
 # - homie
 # - mqtt (planned)
 input:
+- name: telemetry
+  type: telemetry
 - name: homie
   type: homie
-  # url: tcp://localhost:1883
   url: tcp://localhost:1883
 - name: mqtt-sub
   type: mqtt
-  # url: tcp://localhost:1883
   url: tcp://localhost:1883
+  topic: input/#
 
 # Valid output types:
 # - volkszaehler
@@ -25,7 +27,7 @@ output:
   type: mqtt
   # url: tcp://localhost:1883
   url: tcp://localhost:1883
-  topic: homie/output/node/%id%%name%
+  topic: input/node/%name%
 
 # Wiring configures which input and output data sources are connected.
 # Multiple mappings can be assigned to a single wiring. If no mapping is defined,

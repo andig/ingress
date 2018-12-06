@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"log"
+	"regexp"
 	"strconv"
 	"sync"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/andig/ingress/pkg/data"
 	"github.com/eclipse/paho.mqtt.golang"
 )
+
+const topicPattern = "([^/]+$)"
 
 type Subscriber struct {
 	*MqttConnector
@@ -56,31 +59,37 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 func (h *Subscriber) Run(out chan data.Data) {
 	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
 
-	// r := rand.New(rand.NewSource(time.Now().Unix()))
-	// for {
-	// 	time.Sleep(time.Duration(r.Int31n(1000)) * time.Millisecond)
-	// 	data := data.Data{
-	// 		Name:  "mqttSample",
-	// 		Value: r.Float64(),
-	// 	}
-	// 	out <- data
-	// }
-	// panic("not implemented")
-
-	// topic := fmt.Sprintf("%s/+/+/+", h.rootTopic)
 	h.MqttClient.Subscribe(h.rootTopic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		log.Printf(h.name+": received (%s=%s)", msg.Topic, msg.Payload())
+		log.Printf(h.name+": received (%s=%s)", msg.Topic(), msg.Payload())
 
 		payload := string(msg.Payload())
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
-			log.Printf(h.name+": float convesion error, skipping (%s=%s)", msg.Topic, payload)
+			log.Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
 		}
 
+		name := h.matchString(msg.Topic(), topicPattern)
+		log.Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
+
 		data := data.Data{
-			Name:  msg.Topic(),
+			ID:    name,
+			Name:  name,
 			Value: value,
 		}
 		out <- data
 	})
+}
+
+func (h *Subscriber) matchString(s string, pattern string) string {
+	re, err := regexp.Compile(topicPattern)
+	if err != nil {
+		panic(h.name + ": invalid regex pattern " + pattern)
+	}
+
+	matches := re.FindStringSubmatch(s)
+	if matches != nil && len(matches) == 2 {
+		return matches[1]
+	}
+
+	return ""
 }

@@ -6,10 +6,10 @@ import (
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
-	"github.com/andig/ingress/pkg/telemetry"
 
 	"github.com/andig/ingress/pkg/homie"
 	"github.com/andig/ingress/pkg/mqtt"
+	"github.com/andig/ingress/pkg/telemetry"
 	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
@@ -18,7 +18,6 @@ type Publisher interface {
 	Discover()
 	Publish(d data.Data)
 }
-
 type Subscriber interface {
 	// NewFromInputConfig(c config.Input)
 	Run(receiver chan data.Data)
@@ -47,21 +46,41 @@ func NewConnectors(i []config.Input, o []config.Output) *Connectors {
 		c.createOutputConnector(output)
 	}
 
-	// c.startTelmetry()
+	// activate telemetry if configured
+	c.ApplyTelemetry()
 
 	return &c
 }
 
-func (c *Connectors) startTelmetry() {
+// ApplyTelemetry wires metric providers to the Telemetry instance
+func (c *Connectors) ApplyTelemetry() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	telemetry := &telemetry.Telemetry{}
-	c.Input["telemetry"] = telemetry
+	for _, input := range c.Input {
+		if instance, ok := input.(*telemetry.Telemetry); ok {
+			for _, source := range c.Input {
+				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
+					instance.AddProvider(metricProvider)
+				}
+			}
+			for _, source := range c.Output {
+				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
+					instance.AddProvider(metricProvider)
+				}
+			}
+
+			// log.Println("connector: activated metrics collection")
+			return
+		}
+	}
 }
 
 func (c *Connectors) createInputConnector(i config.Input) {
 	var conn Subscriber
 	switch i.Type {
+	case "telemetry":
+		conn = telemetry.NewFromInputConfig(i)
+		break
 	case "mqtt":
 		conn = mqtt.NewFromInputConfig(i)
 		break

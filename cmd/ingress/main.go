@@ -5,42 +5,36 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/homie"
+	. "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 func inject() {
-	dev := &homie.Device{
-		Name: "meter1",
-		Nodes: []*homie.Node{
-			&homie.Node{
-				Name: "zaehlwerk1",
-				Properties: []*homie.Property{
-					&homie.Property{
-						Name: "power",
-					},
-					&homie.Property{
-						Name: "zaehlerstand",
-					},
-				},
-			},
-		},
+	mqttOptions := NewMqttClientOptions("tcp://localhost:1883", "", "")
+	mqttClient := mqtt.NewClient(mqttOptions)
+	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
+		log.Fatal("mqtt: error connecting: ", token.Error())
+		panic(token.Error())
 	}
-	_ = dev
+
+	time.Sleep(200 * time.Millisecond)
+	token := mqttClient.Publish("input/inject", 0, false, "3.14")
+	if token.WaitTimeout(100 * time.Millisecond) {
+		log.Println("--> inject done")
+	}
 }
 
 func main() {
 	var c config.Config
 	c.LoadConfig("config.yml")
-	log.Println(c.Wiring)
-	log.Println(c.Mapping)
 
 	connectors := wiring.NewConnectors(c.Input, c.Output)
 	mapper := wiring.NewMapper(c.Wiring, connectors.Output)
 	go connectors.Run(mapper)
 
 	// test data
-	inject()
+	// inject()
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }
