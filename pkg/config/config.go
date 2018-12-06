@@ -8,19 +8,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Input struct {
-	Name     string
-	Type     string
-	URL      string
+type Credentials struct {
 	User     string
 	Password string
-	Topic    string
+}
+
+type Input struct {
+	Name string
+	Type string
+	URL  string
+	Credentials
+	Topic string
 }
 
 type Output struct {
 	Name string
 	Type string
-	Url  string
+	URL  string
+	Credentials
+	Topic string
 }
 
 type Wiring struct {

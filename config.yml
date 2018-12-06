@@ -8,11 +8,11 @@ input:
 - name: homie
   type: homie
   # url: tcp://localhost:1883
-  url: tcp://test.mosquitto.org:1883
-- name: mqtt
+  url: tcp://localhost:1883
+- name: mqtt-sub
   type: mqtt
   # url: tcp://localhost:1883
-  url: tcp://test.mosquitto.org:1883
+  url: tcp://localhost:1883
 
 # Valid output types:
 # - volkszaehler
@@ -21,16 +21,22 @@ output:
 - name: volkszaehler
   type: volkszaehler
   url: https://demo.volkszaehler.org/
-  
+- name: mqtt-pub
+  type: mqtt
+  # url: tcp://localhost:1883
+  url: tcp://localhost:1883
+  topic: homie/output/node/%id%%name%
+
 # Wiring configures which input and output data sources are connected.
 # Multiple mappings can be assigned to a single wiring. If no mapping is defined,
 # the "auto" mapping is applied. Auto mapping works by matching topic names.
 wiring:
 - input: 
   - homie
-  - mqtt
+  - mqtt-sub
   output: 
   - volkszaehler
+  - mqtt-pub
   mapping:
   - direct
   - namemapping2

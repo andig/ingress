@@ -68,7 +68,7 @@ func (c *Connectors) createInputConnector(i config.Input) {
 	case "homie":
 		conn = homie.NewFromInputConfig(i)
 		break
-	case "default":
+	default:
 		panic("Invalid input type: " + i.Type)
 	}
 
@@ -80,10 +80,13 @@ func (c *Connectors) createInputConnector(i config.Input) {
 func (c *Connectors) createOutputConnector(o config.Output) {
 	var conn Publisher
 	switch o.Type {
+	case "mqtt":
+		conn = mqtt.NewFromOutputConfig(o)
+		break
 	case "volkszaehler":
 		conn = volkszaehler.NewFromOutputConfig(o)
 		break
-	case "default":
+	default:
 		panic("Invalid output type: " + o.Type)
 	}
 

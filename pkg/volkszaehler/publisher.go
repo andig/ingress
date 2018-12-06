@@ -9,7 +9,7 @@ import (
 )
 
 func NewFromOutputConfig(c config.Output) *Publisher {
-	api := NewAPI(c.Url, 1*time.Second, false)
+	api := NewAPI(c.URL, 1*time.Second, false)
 	vz := &Publisher{
 		Api: api,
 	}
