@@ -24,16 +24,16 @@ type Mapper struct {
 
 // NewMapper creates data mapper that is able to Process() input messages by
 // sending them to configured output wires
-func NewMapper(c []config.Wiring, inputs SubscriberMap, outputs PublisherMap) *Mapper {
+func NewMapper(c []config.Wiring, conn *Connectors) *Mapper {
 	wirings := make(wirings, 0)
 	for _, wiring := range c {
 		for _, input := range wiring.Inputs {
-			if _, ok := inputs[input]; !ok {
+			if _, ok := conn.Input[input]; !ok {
 				panic(fmt.Sprintf("mapper: cannot wire %s -> *, source not defined", input))
 			}
 
 			for _, output := range wiring.Outputs {
-				if _, ok := outputs[output]; !ok {
+				if _, ok := conn.Output[output]; !ok {
 					panic(fmt.Sprintf("mapper: cannot wire %s -> %s, target not defined", input, output))
 				}
 
@@ -48,7 +48,7 @@ func NewMapper(c []config.Wiring, inputs SubscriberMap, outputs PublisherMap) *M
 
 	mapper := &Mapper{
 		wirings:   wirings,
-		publisher: outputs,
+		publisher: conn.Output,
 	}
 	return mapper
 }

@@ -60,7 +60,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
 
 	h.MqttClient.Subscribe(h.rootTopic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		log.Printf(h.name+": received (%s=%s)", msg.Topic(), msg.Payload())
+		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		payload := string(msg.Payload())
 		value, err := strconv.ParseFloat(payload, 64)

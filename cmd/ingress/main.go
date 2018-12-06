@@ -30,7 +30,7 @@ func main() {
 	c.LoadConfig("config.yml")
 
 	connectors := wiring.NewConnectors(c.Input, c.Output)
-	mapper := wiring.NewMapper(c.Wiring, connectors.Input, connectors.Output)
+	mapper := wiring.NewMapper(c.Wiring, connectors)
 	go connectors.Run(mapper)
 
 	// test data

@@ -34,7 +34,7 @@ func (h *Telemetry) AddProvider(provider MetricProvider) {
 
 func (h *Telemetry) Run(out chan data.Data) {
 	for {
-		time.Sleep(time.Duration(100 * time.Millisecond))
+		time.Sleep(time.Duration(1000 * time.Millisecond))
 
 		for _, provider := range h.providers {
 			data := provider.GetMetrics()
