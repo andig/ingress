@@ -1,6 +1,7 @@
 package wiring
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"sync/atomic"
@@ -23,14 +24,17 @@ type Mapper struct {
 
 // NewMapper creates data mapper that is able to Process() input messages by
 // sending them to configured output wires
-func NewMapper(c []config.Wiring, publisher PublisherMap) *Mapper {
+func NewMapper(c []config.Wiring, inputs SubscriberMap, outputs PublisherMap) *Mapper {
 	wirings := make(wirings, 0)
 	for _, wiring := range c {
 		for _, input := range wiring.Inputs {
+			if _, ok := inputs[input]; !ok {
+				panic(fmt.Sprintf("mapper: cannot wire %s -> *, source not defined", input))
+			}
+
 			for _, output := range wiring.Outputs {
-				mappings := wiring.Mapping
-				if len(mappings) == 0 {
-					mappings = []string{"auto"}
+				if _, ok := outputs[output]; !ok {
+					panic(fmt.Sprintf("mapper: cannot wire %s -> %s, target not defined", input, output))
 				}
 
 				m := strings.Join(wiring.Mapping, ",")
@@ -44,7 +48,7 @@ func NewMapper(c []config.Wiring, publisher PublisherMap) *Mapper {
 
 	mapper := &Mapper{
 		wirings:   wirings,
-		publisher: publisher,
+		publisher: outputs,
 	}
 	return mapper
 }
