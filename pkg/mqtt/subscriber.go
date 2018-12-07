@@ -72,6 +72,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 		log.Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
 
 		data := data.Data{
+			Timestamp: data.Timestamp(),
 			ID:    name,
 			Name:  name,
 			Value: value,

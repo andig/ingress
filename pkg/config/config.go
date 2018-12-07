@@ -8,25 +8,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Basics struct {
+	Name string
+	Type string
+	URL  string
+}
+
 type Credentials struct {
 	User     string
 	Password string
 }
 
 type Input struct {
-	Name string
-	Type string
-	URL  string
-	Credentials
-	Topic string
+	Basics      `yaml:",inline"`
+	Credentials `yaml:",inline"`
+	Topic       string
 }
 
 type Output struct {
-	Name string
-	Type string
-	URL  string
-	Credentials
-	Topic string
+	Basics      `yaml:",inline"`
+	Credentials `yaml:",inline"`
+	Topic       string
 }
 
 type Wiring struct {
@@ -53,7 +55,8 @@ type Config struct {
 	Mapping []Mapping `yaml:"mapping"`
 }
 
-func (c *Config) LoadConfig(file string) *Config {
+// Load loads and parses configuration from file
+func (c *Config) Load(file string) *Config {
 	yamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
@@ -64,14 +67,14 @@ func (c *Config) LoadConfig(file string) *Config {
 		log.Fatalf("Unmarshal: %v", err)
 	}
 
-	c.DumpConfig()
 	return c
 }
 
-func (c *Config) DumpConfig() {
+// Dump dumps parsed config to console
+func (c *Config) Dump() {
 	d, err := yaml.Marshal(c)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	fmt.Printf("--- dump:\n%s\n\n", string(d))
+	fmt.Println(string(d))
 }

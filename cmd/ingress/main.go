@@ -27,7 +27,8 @@ func inject() {
 
 func main() {
 	var c config.Config
-	c.LoadConfig("config.yml")
+	c.Load("config.yml")
+	c.Dump()
 
 	connectors := wiring.NewConnectors(c.Input, c.Output)
 	mapper := wiring.NewMapper(c.Wiring, connectors)

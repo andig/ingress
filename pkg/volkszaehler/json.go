@@ -44,6 +44,17 @@ type PrognosisStruct struct {
 	Fator       float32 `json:"factor"`
 }
 
+type ResponseException struct {
+	Type    string
+	Message string
+	Code    int
+}
+
+type ErrorResponse struct {
+	Version   string            `json:"version"`
+	Exception ResponseException `json:"exception"`
+}
+
 // UnmarshalJSON converts volkszaehler tuple into Tuple struct
 func (t *Tuple) UnmarshalJSON(b []byte) error {
 	var a []*json.RawMessage

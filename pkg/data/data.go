@@ -1,12 +1,14 @@
 package data
 
+import "time"
+
 type Data struct {
-	ID    string
-	Name  string
-	Value float64
+	ID        string
+	Name      string
+	Timestamp int64
+	Value     float64
 }
 
-type InputData struct {
-	*Data
-	Source string
+func Timestamp() int64 {
+	return int64(time.Now().UnixNano() / 1e6)
 }

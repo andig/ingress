@@ -18,6 +18,7 @@ type Publisher interface {
 	Discover()
 	Publish(d data.Data)
 }
+
 type Subscriber interface {
 	// NewFromInputConfig(c config.Input)
 	Run(receiver chan data.Data)
@@ -56,13 +57,18 @@ func NewConnectors(i []config.Input, o []config.Output) *Connectors {
 func (c *Connectors) ApplyTelemetry() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
+	
 	for _, input := range c.Input {
+		// find telemetry instance
 		if instance, ok := input.(*telemetry.Telemetry); ok {
+			// add metric providers from input
 			for _, source := range c.Input {
 				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
 				}
 			}
+
+			// add metric providers from output
 			for _, source := range c.Output {
 				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
@@ -70,6 +76,7 @@ func (c *Connectors) ApplyTelemetry() {
 			}
 
 			// log.Println("connector: activated metrics collection")
+			log.Println("enabled metrics collection")
 			return
 		}
 	}
@@ -117,20 +124,16 @@ func (c *Connectors) createOutputConnector(o config.Output) {
 // Run starts each subscriber's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
 	for name, input := range c.Input {
+		log.Printf("connector: starting %s", name)
 		c := make(chan data.Data)
 
 		// start distributor
-		go func(name string, c chan data.Data) {
+		go func(source string, c chan data.Data) {
 			log.Printf("connector: recv from %s", name)
 			for {
 				d := <-c
-				log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)
-				i := &data.InputData{
-					Source: name,
-					Data:   &d,
-				}
-
-				go mapper.Process(i)
+				log.Printf("connector: recv from %s (%s=%f)", source, d.Name, d.Value)
+				go mapper.Process(source, &d)
 			}
 		}(name, c)
 

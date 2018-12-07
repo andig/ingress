@@ -79,7 +79,7 @@ func (api *Api) Get(endpoint string) (*http.Response, error) {
 		return nil, err
 	}
 	duration := time.Now().Sub(start)
-	log.Printf("GET %s (%dms)", url, duration.Nanoseconds()/1e6)
+	log.Printf("GET %d %s (%dms)", resp.StatusCode, url, duration.Nanoseconds()/1e6)
 
 	if api.debug {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -203,6 +203,7 @@ func (api *Api) Post(endpoint string, payload string) (*http.Response, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	req.Header.Add("Content-type", "application/json")
 	req.Header.Add("Accept", "application/json")
 
 	resp, err := api.client.Do(req)
@@ -211,7 +212,7 @@ func (api *Api) Post(endpoint string, payload string) (*http.Response, error) {
 		return nil, err
 	}
 	duration := time.Now().Sub(start)
-	log.Printf("POST %s (%dms)", url, duration.Nanoseconds()/1e6)
+	log.Printf("POST %d %s (%dms)", resp.StatusCode, url, duration.Nanoseconds()/1e6)
 
 	if api.debug {
 		body, err := ioutil.ReadAll(resp.Body)

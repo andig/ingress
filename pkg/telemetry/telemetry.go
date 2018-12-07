@@ -29,6 +29,14 @@ func NewTelemetry() *Telemetry {
 func (h *Telemetry) AddProvider(provider MetricProvider) {
 	h.mux.Lock()
 	defer h.mux.Unlock()
+
+	// don't add providers twice
+	for _, p := range h.providers {
+		if p == provider {
+			return
+		}
+	}
+
 	h.providers = append(h.providers, provider)
 }
 
@@ -47,16 +55,20 @@ func (h *Telemetry) Run(out chan data.Data) {
 
 func (h *Telemetry) GetMetrics() []data.Data {
 	var memstats runtime.MemStats
+
+	ts := data.Timestamp()
 	runtime.ReadMemStats(&memstats)
 
 	data := []data.Data{
 		data.Data{
-			Name:  "NumGoroutine",
-			Value: float64(runtime.NumGoroutine()),
+			Timestamp: ts,
+			Name:      "NumGoroutine",
+			Value:     float64(runtime.NumGoroutine()),
 		},
 		data.Data{
-			Name:  "Alloc",
-			Value: float64(memstats.Alloc),
+			Timestamp: ts,
+			Name:      "Alloc",
+			Value:     float64(memstats.Alloc),
 		},
 	}
 
