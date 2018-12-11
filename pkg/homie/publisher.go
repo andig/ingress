@@ -17,7 +17,7 @@ type Publisher struct {
 	dev       Device
 }
 
-func NewFromOutputConfig(c config.Output) *Publisher {
+func NewFromTargetConfig(c config.Target) *Publisher {
 	panic("not implemented")
 }
 

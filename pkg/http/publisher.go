@@ -19,10 +19,13 @@ type Publisher struct {
 	client  *transport.Client
 }
 
-func NewFromOutputConfig(c config.Output) *Publisher {
+func NewFromTargetConfig(c config.Target) *Publisher {
 	method := strings.ToUpper(c.Method)
 	if method != "GET" && method != "POST" {
 		panic(c.Name + ": invalid method " + c.Method)
+	}
+	if method == "POST" && c.Payload == "" {
+		panic(c.Name + ": missing payload configuration for POST method")
 	}
 
 	h := &Publisher{
@@ -67,19 +70,12 @@ func (h *Publisher) Publish(d data.Data) {
 
 	// execute request
 	resp, err = h.client.Do(req)
-
 	if err != nil {
 		log.Printf(h.name+": send failed (%s)", err)
 		return
 	}
 
-	if resp.StatusCode > 300 {
-		// body, err := ioutil.ReadAll(resp.Body)
-		// if err != nil {
-		// 	log.Printf(h.name+": reading response failed (%s)", err)
-		// 	return
-		// }
-
+	if resp.StatusCode >= 300 {
 		log.Printf(h.name+": send failed %s %d %s", h.method, resp.StatusCode, url)
 	}
 }

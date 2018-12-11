@@ -20,7 +20,7 @@ type Subscriber struct {
 	mux       sync.Mutex
 }
 
-func NewFromInputConfig(c config.Input) *Subscriber {
+func NewFromSourceConfig(c config.Source) *Subscriber {
 	topic := c.Topic
 	if topic == "" {
 		topic = "#"
@@ -66,6 +66,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
 			log.Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
+			return
 		}
 
 		name := h.matchString(msg.Topic(), topicPattern)
@@ -73,9 +74,9 @@ func (h *Subscriber) Run(out chan data.Data) {
 
 		data := data.Data{
 			Timestamp: data.Timestamp(),
-			ID:    name,
-			Name:  name,
-			Value: value,
+			ID:        name,
+			Name:      name,
+			Value:     value,
 		}
 		out <- data
 	})

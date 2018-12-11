@@ -19,13 +19,13 @@ type Credentials struct {
 	Password string
 }
 
-type Input struct {
+type Source struct {
 	Basics      `yaml:",inline"`
 	Credentials `yaml:",inline"`
 	Topic       string
 }
 
-type Output struct {
+type Target struct {
 	Basics      `yaml:",inline"`
 	Credentials `yaml:",inline"`
 	Topic       string
@@ -35,27 +35,27 @@ type Output struct {
 }
 
 type Wiring struct {
-	Inputs  []string `yaml:"sources"`
-	Outputs []string `yaml:"targets"`
-	Mapping []string `yaml:"mappings"`
+	Sources  []string `yaml:"sources"`
+	Targets  []string `yaml:"targets"`
+	Mappings []string `yaml:"mappings"`
 }
 
 type MapEntry struct {
-	Source string
-	Target string
-	Uuid   string
+	From string
+	To   string
+	Uuid string
 }
 
 type Mapping struct {
-	Name string
+	Name string     `yaml:"name"`
 	Map  []MapEntry `yaml:"entries"`
 }
 
 type Config struct {
-	Input   []Input   `yaml:"sources"`
-	Output  []Output  `yaml:"targets"`
-	Wiring  []Wiring  `yaml:"wires"`
-	Mapping []Mapping `yaml:"mappings"`
+	Sources  []Source  `yaml:"sources"`
+	Targets  []Target  `yaml:"targets"`
+	Wires    []Wiring  `yaml:"wires"`
+	Mappings []Mapping `yaml:"mappings"`
 }
 
 // Load loads and parses configuration from file

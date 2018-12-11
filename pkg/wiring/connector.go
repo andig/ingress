@@ -1,6 +1,7 @@
 package wiring
 
 import (
+	"errors"
 	"log"
 	"sync"
 
@@ -14,38 +15,39 @@ import (
 	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
-type Publisher interface {
-	// NewFromOutputConfig(c config.Output)
+type Target interface {
+	// NewFromTargetConfig(c config.Target)
 	Discover()
 	Publish(d data.Data)
 }
 
-type Subscriber interface {
-	// NewFromInputConfig(c config.Input)
+
+type Source interface {
+	// NewFromSourceConfig(c config.Source)
 	Run(receiver chan data.Data)
 }
 
-type SubscriberMap map[string]Subscriber
-type PublisherMap map[string]Publisher
+type sourceMap map[string]Source
+type targetMap map[string]Target
 
 type Connectors struct {
 	mux    sync.Mutex
-	Input  SubscriberMap
-	Output PublisherMap
+	Source  sourceMap
+	Target targetMap
 }
 
-// NewConnectors creates the input and output system connectors
-func NewConnectors(i []config.Input, o []config.Output) *Connectors {
+// NewConnectors creates the source and output system connectors
+func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 	c := Connectors{
-		Input:  make(SubscriberMap),
-		Output: make(PublisherMap),
+		Source:  make(sourceMap),
+		Target: make(targetMap),
 	}
 
-	for _, input := range i {
-		c.createInputConnector(input)
+	for _, Source := range i {
+		c.createSourceConnector(Source)
 	}
 	for _, output := range o {
-		c.createOutputConnector(output)
+		c.createTargetConnector(output)
 	}
 
 	// activate telemetry if configured
@@ -54,23 +56,81 @@ func NewConnectors(i []config.Input, o []config.Output) *Connectors {
 	return &c
 }
 
+func (c *Connectors) createSourceConnector(conf config.Source) {
+	if conf.Name == "" {
+		panic("connectors: configuration error - missing source name")
+	}
+
+	var conn Source
+	switch conf.Type {
+	case "telemetry":
+		conn = telemetry.NewFromSourceConfig(conf)
+		break
+	case "mqtt":
+		conn = mqtt.NewFromSourceConfig(conf)
+		break
+	case "homie":
+		conn = homie.NewFromSourceConfig(conf)
+		break
+	default:
+		panic("connectors: invalid Source type: " + conf.Type)
+	}
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	if _, ok := c.Source[conf.Name]; ok {
+		panic("connectors: configuration error - cannot redefine Source "+ conf.Name)
+	}
+	c.Source[conf.Name] = conn
+}
+
+func (c *Connectors) createTargetConnector(conf config.Target) {
+	if conf.Name == "" {
+		panic("connectors: configuration error - missing target name")
+	}
+
+	var conn Target
+	switch conf.Type {
+	case "http":
+		conn = http.NewFromTargetConfig(conf)
+		break
+	case "mqtt":
+		conn = mqtt.NewFromTargetConfig(conf)
+		break
+	case "volkszaehler":
+		conn = volkszaehler.NewFromTargetConfig(conf)
+		break
+	default:
+		panic("Invalid output type: " + conf.Type)
+	}
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	if _, ok := c.Target[conf.Name]; ok {
+		panic("connectors: configuration error - cannot redefine output "+ conf.Name)
+	}
+	c.Target[conf.Name] = conn
+}
+
 // ApplyTelemetry wires metric providers to the Telemetry instance
 func (c *Connectors) ApplyTelemetry() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	
-	for _, input := range c.Input {
+	for _, Source := range c.Source {
 		// find telemetry instance
-		if instance, ok := input.(*telemetry.Telemetry); ok {
-			// add metric providers from input
-			for _, source := range c.Input {
+		if instance, ok := Source.(*telemetry.Telemetry); ok {
+			// add metric providers from Source
+			for _, source := range c.Source {
 				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
 				}
 			}
 
 			// add metric providers from output
-			for _, source := range c.Output {
+			for _, source := range c.Target {
 				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
 				}
@@ -83,65 +143,39 @@ func (c *Connectors) ApplyTelemetry() {
 	}
 }
 
-func (c *Connectors) createInputConnector(i config.Input) {
-	var conn Subscriber
-	switch i.Type {
-	case "telemetry":
-		conn = telemetry.NewFromInputConfig(i)
-		break
-	case "mqtt":
-		conn = mqtt.NewFromInputConfig(i)
-		break
-	case "homie":
-		conn = homie.NewFromInputConfig(i)
-		break
-	default:
-		panic("Invalid input type: " + i.Type)
+func (c *Connectors) SourceForName(name string) (Source, error) {
+	source, ok := c.Source[name]
+	if !ok {
+		return nil, errors.New("Undefined source "+name)
 	}
-
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.Input[i.Name] = conn
+	return source, nil
 }
 
-func (c *Connectors) createOutputConnector(o config.Output) {
-	var conn Publisher
-	switch o.Type {
-	case "http":
-		conn = http.NewFromOutputConfig(o)
-		break
-	case "mqtt":
-		conn = mqtt.NewFromOutputConfig(o)
-		break
-	case "volkszaehler":
-		conn = volkszaehler.NewFromOutputConfig(o)
-		break
-	default:
-		panic("Invalid output type: " + o.Type)
+func (c *Connectors) TargetForName(name string) (Target, error) {
+	target, ok := c.Target[name]
+	if !ok {
+		return nil, errors.New("Undefined target "+name)
 	}
-
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.Output[o.Name] = conn
+	return target, nil
 }
 
-// Run starts each subscriber's Run() function in a gofunc
+// Run starts each Source's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
-	for name, input := range c.Input {
+	for name, source := range c.Source {
 		log.Printf("connector: starting %s", name)
 		c := make(chan data.Data)
 
 		// start distributor
-		go func(source string, c chan data.Data) {
+		go func(name string, c chan data.Data) {
 			log.Printf("connector: recv from %s", name)
 			for {
 				d := <-c
-				log.Printf("connector: recv from %s (%s=%f)", source, d.Name, d.Value)
-				go mapper.Process(source, &d)
+				log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)
+				go mapper.Process(name, &d)
 			}
 		}(name, c)
 
-		// start subscriber
-		go input.Run(c)
+		// start source connector
+		go source.Run(c)
 	}
 }

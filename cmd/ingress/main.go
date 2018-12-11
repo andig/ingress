@@ -23,6 +23,11 @@ func inject() {
 	if token.WaitTimeout(100 * time.Millisecond) {
 		log.Println("--> inject done")
 	}
+
+	token = mqttClient.Publish("homie/meter1/zaehlwerk1/power", 0, false, "4711")
+	if token.WaitTimeout(100 * time.Millisecond) {
+		log.Println("--> inject done")
+	}
 }
 
 func main() {
@@ -30,8 +35,10 @@ func main() {
 	c.Load("config.yml")
 	c.Dump()
 
-	connectors := wiring.NewConnectors(c.Input, c.Output)
-	mapper := wiring.NewMapper(c.Wiring, connectors)
+	connectors := wiring.NewConnectors(c.Sources, c.Targets)
+	mappings := wiring.NewMappings(c.Mappings, connectors)
+	wires := wiring.NewWiring(c.Wires, mappings, connectors)
+	mapper := wiring.NewMapper(wires, connectors)
 	go connectors.Run(mapper)
 
 	// test data

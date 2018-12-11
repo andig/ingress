@@ -16,7 +16,7 @@ type Publisher struct {
 	name string
 }
 
-func NewFromOutputConfig(c config.Output) *Publisher {
+func NewFromTargetConfig(c config.Target) *Publisher {
 	api := NewAPI(c.URL, 1*time.Second, false)
 	vz := &Publisher{
 		Api:  api,

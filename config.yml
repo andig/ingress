@@ -6,44 +6,53 @@
 # - homie
 # - mqtt (planned)
 sources:
-- name: telemetry
-  type: telemetry
+# - name: telemetry
+#   type: telemetry
 - name: homie
   type: homie
   url: tcp://localhost:1883
-- name: mqtt-sub
-  type: mqtt
-  url: tcp://localhost:1883
-  topic: input/#
+# - name: mqtt-sub
+#   type: mqtt
+#   url: tcp://localhost:1883
+#   topic: input/#
 
 # Valid target types:
 # - volkszaehler
 # - volkszaehler-push (planned)
 targets:
 - name: vz
-  type: volkszaehler
-  url: https://demo.volkszaehler.org/
+  type: http
+  url: https://demo.volkszaehler.org/middleware.php/data/%name%.json
+  method: POST
+  headers:
+    Content-type: application/json
+    Accept: application/json
+  payload: >-
+    [[%timestamp%,%value%]]
+# - name: vz
+#   type: volkszaehler
+#   url: https://demo.volkszaehler.org/
 - name: mqtt-pub
   type: mqtt
   url: tcp://localhost:1883
-  topic: source1/node/%name%
+  topic: output/node/%name%
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
 - sources: 
   - homie
-  - mqtt-sub
+#   - mqtt-sub
+#   - telemetry
   targets: 
   - vz
-  - mqtt-pub
+#   - mqtt-pub
   mappings:
   - direct
-  - namemapping2
 
 # Mappings configure which source topic is mapped to which target topics
 # Mappings are reusable across wirings
 mappings:
 - name: direct
   entries:
-  - source: zaehlerstand
-    target: foobar
+  - from: zaehlerstand
+    to: foobar

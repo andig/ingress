@@ -14,7 +14,7 @@ type Publisher struct {
 	topicPattern string
 }
 
-func NewFromOutputConfig(c config.Output) *Publisher {
+func NewFromTargetConfig(c config.Target) *Publisher {
 	mqttOptions := NewMqttClientOptions(c.URL, c.User, c.Password)
 	mqttPublisher := NewPublisher(c.Name, c.Topic, mqttOptions)
 	mqttClient := mqtt.NewClient(mqttOptions)
