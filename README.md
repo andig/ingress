@@ -151,6 +151,7 @@ Data source are not neccessarily directly connected to physical devices. For exa
     - `topic`: topic template (default: ingress/%name%)
 - `http`: HTTP server
     - `url`: server url including schema and port
+    - `headers`: HTTP headers as key:value pairs (e.g. Content-type: application/json)
     - `method`: HTTP method (default: GET)
     - `payload`: payload template for POST requests
 
