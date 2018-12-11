@@ -22,10 +22,10 @@ type Publisher struct {
 func NewFromTargetConfig(c config.Target) *Publisher {
 	method := strings.ToUpper(c.Method)
 	if method != "GET" && method != "POST" {
-		panic(c.Name + ": invalid method " + c.Method)
+		log.Fatal(c.Name + ": invalid method " + c.Method)
 	}
 	if method == "POST" && c.Payload == "" {
-		panic(c.Name + ": missing payload configuration for POST method")
+		log.Fatal(c.Name + ": missing payload configuration for POST method")
 	}
 
 	h := &Publisher{

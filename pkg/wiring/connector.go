@@ -58,7 +58,7 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 
 func (c *Connectors) createSourceConnector(conf config.Source) {
 	if conf.Name == "" {
-		panic("connectors: configuration error - missing source name")
+		log.Fatal("connectors: configuration error - missing source name")
 	}
 
 	var conn Source
@@ -73,21 +73,21 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		conn = homie.NewFromSourceConfig(conf)
 		break
 	default:
-		panic("connectors: invalid Source type: " + conf.Type)
+		log.Fatal("connectors: invalid Source type: " + conf.Type)
 	}
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
 	if _, ok := c.Source[conf.Name]; ok {
-		panic("connectors: configuration error - cannot redefine Source "+ conf.Name)
+		log.Fatal("connectors: configuration error - cannot redefine Source "+ conf.Name)
 	}
 	c.Source[conf.Name] = conn
 }
 
 func (c *Connectors) createTargetConnector(conf config.Target) {
 	if conf.Name == "" {
-		panic("connectors: configuration error - missing target name")
+		log.Fatal("connectors: configuration error - missing target name")
 	}
 
 	var conn Target
@@ -102,14 +102,14 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		conn = volkszaehler.NewFromTargetConfig(conf)
 		break
 	default:
-		panic("Invalid output type: " + conf.Type)
+		log.Fatal("Invalid output type: " + conf.Type)
 	}
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
 	if _, ok := c.Target[conf.Name]; ok {
-		panic("connectors: configuration error - cannot redefine output "+ conf.Name)
+		log.Fatal("connectors: configuration error - cannot redefine output "+ conf.Name)
 	}
 	c.Target[conf.Name] = conn
 }
@@ -167,7 +167,6 @@ func (c *Connectors) Run(mapper *Mapper) {
 
 		// start distributor
 		go func(name string, c chan data.Data) {
-			log.Printf("connector: recv from %s", name)
 			for {
 				d := <-c
 				log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)

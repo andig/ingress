@@ -62,12 +62,12 @@ type Config struct {
 func (c *Config) Load(file string) *Config {
 	yamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
+		log.Fatalf("config: cannot read config file %s (%v)", file, err)
 	}
 
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
+		log.Fatalf("config: cannot parse config file (%v)", err)
 	}
 
 	return c
@@ -75,9 +75,12 @@ func (c *Config) Load(file string) *Config {
 
 // Dump dumps parsed config to console
 func (c *Config) Dump() {
+	fmt.Println("Parsed configuration")
+	fmt.Println("--------------------")
+
 	d, err := yaml.Marshal(c)
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		log.Fatalf("config: error (%v)", err)
 	}
 	fmt.Println(string(d))
 }

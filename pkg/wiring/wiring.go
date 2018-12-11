@@ -1,7 +1,6 @@
 package wiring
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/andig/ingress/pkg/config"
@@ -23,19 +22,19 @@ func NewWiring(c []config.Wiring, mappings *Mappings, conn *Connectors) *Wiring 
 	for _, wiring := range c {
 		for _, source := range wiring.Sources {
 			if _, err := conn.SourceForName(source); err != nil {
-				panic(fmt.Sprintf("wiring: cannot wire %s -> *, source not defined", source))
+				log.Fatalf("wiring: cannot wire %s -> *, source not defined", source)
 			}
 
 			for _, target := range wiring.Targets {
 				if _, err := conn.TargetForName(target); err != nil {
-					panic(fmt.Sprintf("wiring: cannot wire %s -> %s, target not defined", source, target))
+					log.Fatalf("wiring: cannot wire %s -> %s, target not defined", source, target)
 				}
 
 				wireMappings := make([][]Mapping, 0)
 				for _, mapping := range wiring.Mappings {
 					wireMapping, err := mappings.MappingsForName(mapping)
 					if err != nil {
-						panic(fmt.Sprintf("wiring: cannot wire %s -> %s, undefined mapping %s", source, target, mapping))
+						log.Fatalf("wiring: cannot wire %s -> %s, undefined mapping %s", source, target, mapping)
 					}
 
 					wireMappings = append(wireMappings, wireMapping)

@@ -32,10 +32,10 @@ targets:
 # - name: vz
 #   type: volkszaehler
 #   url: https://demo.volkszaehler.org/
-- name: mqtt-pub
-  type: mqtt
-  url: tcp://localhost:1883
-  topic: output/node/%name%
+# - name: mqtt-pub
+#   type: mqtt
+#   url: tcp://localhost:1883
+#   topic: output/node/%name%
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:

@@ -18,7 +18,8 @@ type Publisher struct {
 }
 
 func NewFromTargetConfig(c config.Target) *Publisher {
-	panic("not implemented")
+	log.Fatal("not implemented")
+	return nil
 }
 
 func NewPublisher(name string, rootTopic string, dev Device, mqttOptions *mqtt.ClientOptions) *Publisher {
@@ -50,7 +51,7 @@ func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
 }
 
 func (h *Publisher) Discover() {
-	panic("not implemented")
+	log.Fatal("not implemented")
 }
 
 func (h *Publisher) Publish(d data.Data) {

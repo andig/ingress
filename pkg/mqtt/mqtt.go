@@ -41,7 +41,6 @@ func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
 	// connect
 	if token := m.MqttClient.Connect(); token.Wait() && token.Error() != nil {
 		log.Fatal("mqtt: error connecting: ", token.Error())
-		panic(token.Error())
 	}
 }
 

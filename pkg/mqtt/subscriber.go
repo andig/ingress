@@ -85,7 +85,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 func (h *Subscriber) matchString(s string, pattern string) string {
 	re, err := regexp.Compile(topicPattern)
 	if err != nil {
-		panic(h.name + ": invalid regex pattern " + pattern)
+		log.Fatal(h.name + ": invalid regex pattern " + pattern)
 	}
 
 	matches := re.FindStringSubmatch(s)
