@@ -79,7 +79,7 @@ Data source are not neccessarily directly connected to physical devices. For exa
 ### Sources
 
 - Generic MQTT adapter
-- [GoSDM](https://github.com/gonium/gosdm630) MODBus adapter as of v0.8 using [Homie](https://https://homieiot.github.io) protocol
+- [GoSDM](https://github.com/gonium/gosdm630) ModBus adapter as of v0.8 using [Homie](https://https://homieiot.github.io) protocol
 
 ### Targets
 

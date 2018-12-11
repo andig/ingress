@@ -47,7 +47,7 @@ func (vz *Publisher) Publish(d data.Data) {
 	// format payload
 	payload := fmt.Sprintf(`[
 		[%d,%s]
-	]`, d.Timestamp, fmt.Sprintf("%.3f", d.Value))
+	]`, d.Timestamp, d.ValStr())
 
 	id := d.ID
 	if id == "" {

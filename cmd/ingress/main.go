@@ -37,5 +37,5 @@ func main() {
 	// test data
 	inject()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 }

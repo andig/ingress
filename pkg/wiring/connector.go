@@ -7,6 +7,7 @@ import (
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 
+	"github.com/andig/ingress/pkg/http"
 	"github.com/andig/ingress/pkg/homie"
 	"github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/telemetry"
@@ -106,6 +107,9 @@ func (c *Connectors) createInputConnector(i config.Input) {
 func (c *Connectors) createOutputConnector(o config.Output) {
 	var conn Publisher
 	switch o.Type {
+	case "http":
+		conn = http.NewFromOutputConfig(o)
+		break
 	case "mqtt":
 		conn = mqtt.NewFromOutputConfig(o)
 		break

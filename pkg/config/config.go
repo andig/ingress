@@ -29,6 +29,9 @@ type Output struct {
 	Basics      `yaml:",inline"`
 	Credentials `yaml:",inline"`
 	Topic       string
+	Method      string
+	Headers     map[string]string `yaml:"headers,omitempty"`
+	Payload     string
 }
 
 type Wiring struct {

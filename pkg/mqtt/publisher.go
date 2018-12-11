@@ -1,16 +1,12 @@
 package mqtt
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 	"github.com/eclipse/paho.mqtt.golang"
 )
-
-const patternDelimiter = "%"
 
 type Publisher struct {
 	*MqttConnector
@@ -50,20 +46,12 @@ func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
 }
 
 func (h *Publisher) Publish(d data.Data) {
-	topic := h.topicPattern
-	topic = h.replacePattern(topic, "id", d.ID)
-	topic = h.replacePattern(topic, "name", d.Name)
-
-	message := fmt.Sprintf("%.4f", d.Value)
+	topic := d.MatchPattern(h.topicPattern)
+	message := d.ValStr()
 	log.Printf(h.name+": send (%s=%s)", topic, message)
 
 	token := h.MqttClient.Publish(topic, 1, false, message)
 	h.WaitForToken(token)
-}
-
-func (h *Publisher) replacePattern(input string, pattern string, value string) string {
-	pattern = patternDelimiter + pattern + patternDelimiter
-	return strings.Replace(input, pattern, value, -1)
 }
 
 func (h *Publisher) Discover() {
