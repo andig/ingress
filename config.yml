@@ -1,11 +1,11 @@
-# Input and output describe a list of input/output datasources.
+# Sources and targets describe a list of source and target datasources.
 # All data sources are uniquely identified by their name.
 #
-# Valid input types:
+# Valid source types:
 # - telemetry (internal runtime data)
 # - homie
 # - mqtt (planned)
-input:
+sources:
 - name: telemetry
   type: telemetry
 - name: homie
@@ -16,35 +16,33 @@ input:
   url: tcp://localhost:1883
   topic: input/#
 
-# Valid output types:
+# Valid target types:
 # - volkszaehler
 # - volkszaehler-push (planned)
-output:
+targets:
 - name: vz
   type: volkszaehler
   url: https://demo.volkszaehler.org/
 - name: mqtt-pub
   type: mqtt
   url: tcp://localhost:1883
-  topic: input1/node/%name%
+  topic: source1/node/%name%
 
-# Wiring configures which input and output data sources are connected.
-# Multiple mappings can be assigned to a single wiring. If no mapping is defined,
-# the "auto" mapping is applied. Auto mapping works by matching topic names.
-wiring:
-- input: 
+# Wires connect data sources with targets. Mapping rules can be assigned to a wire.
+wires:
+- sources: 
   - homie
   - mqtt-sub
-  output: 
+  targets: 
   - vz
   - mqtt-pub
-  mapping:
+  mappings:
   - direct
   - namemapping2
 
-# Mapping configures which input topic is mapped to which output topics
+# Mappings configure which source topic is mapped to which target topics
 # Mappings are reusable across wirings
-mapping:
+mappings:
 - name: direct
   entries:
   - source: zaehlerstand

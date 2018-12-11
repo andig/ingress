@@ -32,9 +32,9 @@ type Output struct {
 }
 
 type Wiring struct {
-	Inputs  []string `yaml:"input"`
-	Outputs []string `yaml:"output"`
-	Mapping []string `yaml:"mapping"`
+	Inputs  []string `yaml:"sources"`
+	Outputs []string `yaml:"targets"`
+	Mapping []string `yaml:"mappings"`
 }
 
 type MapEntry struct {
@@ -49,10 +49,10 @@ type Mapping struct {
 }
 
 type Config struct {
-	Input   []Input
-	Output  []Output
-	Wiring  []Wiring  `yaml:"wiring"`
-	Mapping []Mapping `yaml:"mapping"`
+	Input   []Input   `yaml:"sources"`
+	Output  []Output  `yaml:"targets"`
+	Wiring  []Wiring  `yaml:"wires"`
+	Mapping []Mapping `yaml:"mappings"`
 }
 
 // Load loads and parses configuration from file

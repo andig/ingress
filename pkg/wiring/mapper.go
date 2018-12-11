@@ -16,7 +16,7 @@ type wire struct {
 }
 
 type Mapper struct {
-	wirings   []wire
+	wires     []wire
 	publisher PublisherMap
 	inflight  int64 // number of inflight requests
 }
@@ -24,7 +24,7 @@ type Mapper struct {
 // NewMapper creates a data mapper that is able to Process() input messages
 // by sending them to configured output wires
 func NewMapper(c []config.Wiring, conn *Connectors) *Mapper {
-	wirings := make([]wire, 0)
+	wires := make([]wire, 0)
 	for _, wiring := range c {
 		for _, input := range wiring.Inputs {
 			if _, ok := conn.Input[input]; !ok {
@@ -40,13 +40,17 @@ func NewMapper(c []config.Wiring, conn *Connectors) *Mapper {
 				log.Printf("mapper: wiring %s -> %s using %s", input, output, m)
 
 				wire := wire{input, output}
-				wirings = append(wirings, wire)
+				wires = append(wires, wire)
 			}
 		}
 	}
 
+	if len(wires) == 0 {
+		log.Println("mapper: no wires created - please check your configuration")
+	}
+
 	mapper := &Mapper{
-		wirings:   wirings,
+		wires:     wires,
 		publisher: conn.Output,
 	}
 	return mapper
@@ -60,7 +64,7 @@ func (m *Mapper) Process(source string, d *data.Data) {
 	}
 
 	mapped := false
-	for _, wiring := range m.wirings {
+	for _, wiring := range m.wires {
 		if wiring.input == source {
 			mapped = true
 
