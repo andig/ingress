@@ -2,6 +2,7 @@ package wiring
 
 import (
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/andig/ingress/pkg/config"
@@ -34,14 +35,14 @@ func NewMappings(c []config.Mapping, conn *Connectors) *Mappings {
 
 func (m *Mappings) createMapping(conf config.Mapping, conn *Connectors) {
 	if conf.Name == "" {
-		panic("mappings: configuration error - missing mapping name")
+		log.Fatal("mappings: configuration error - missing mapping name")
 	}
 
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
 	if _, ok := m.mappings[conf.Name]; ok {
-		panic("mappings: configuration error - cannot redefine mapping " + conf.Name)
+		log.Fatal("mappings: configuration error - cannot redefine mapping " + conf.Name)
 	}
 
 	mapEntries := make([]Mapping, 0)

@@ -10,8 +10,8 @@ import (
 
 type Publisher struct {
 	*MqttConnector
-	name         string
-	topicPattern string
+	name  string
+	topic string
 }
 
 func NewFromTargetConfig(c config.Target) *Publisher {
@@ -23,11 +23,15 @@ func NewFromTargetConfig(c config.Target) *Publisher {
 	return mqttPublisher
 }
 
-func NewPublisher(name string, topicPattern string, mqttOptions *mqtt.ClientOptions) *Publisher {
+func NewPublisher(name string, topic string, mqttOptions *mqtt.ClientOptions) *Publisher {
+	if topic == "" {
+		topic = "ingress/%name%"
+	}
+
 	h := &Publisher{
 		MqttConnector: &MqttConnector{},
 		name:          name,
-		topicPattern:  topicPattern,
+		topic:         topic,
 	}
 
 	// connection lost handler
@@ -46,7 +50,7 @@ func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
 }
 
 func (h *Publisher) Publish(d data.Data) {
-	topic := d.MatchPattern(h.topicPattern)
+	topic := d.MatchPattern(h.topic)
 	message := d.ValStr()
 	log.Printf(h.name+": send (%s=%s)", topic, message)
 

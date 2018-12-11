@@ -8,6 +8,9 @@ import (
 )
 
 func NewMqttClientOptions(url string, user string, password string) *mqtt.ClientOptions {
+	if url == "" {
+		url = "tcp://localhost:1883"
+	}
 	mqttOptions := mqtt.NewClientOptions()
 	mqttOptions.AddBroker(url)
 	mqttOptions.SetUsername(user)
