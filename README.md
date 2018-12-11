@@ -39,7 +39,7 @@ This use case requires to connect the following components:
     | GoSDM | ---> | Mosquitto | ---> | Ingress | ---> | Volkszähler |
     +-------+      +-----------+      +---------+      +-------------+
 
-### Ingress Configuration
+### Configuration
 
 For this scenario `ingress` needs to connect mosquitto to [Volkszähler]. 
 
@@ -86,6 +86,34 @@ The HTTP target `url` and the POST `payload` data are built from the received da
 - `name`: name of the input data reading
 - `value`: value of the input data reading as formatted string
 - `timestamp`: timestamp when the input data was received
+
+### Testing
+
+Now start `ingress` and validate the parsed configuration:
+
+    ingress -c config.yml -d
+
+    2018/12/11 22:06:15 wiring: wiring homie -> vz
+    2018/12/11 22:06:15 connector: starting homie
+    2018/12/11 22:06:15 homie: connected to tcp://localhost:1883
+    2018/12/11 22:06:15 homie: subscribed to topic homie
+
+Simulate a [homie] device using `mosquitto_pub`:
+
+    mosquitto_pub -t 'homie/meter1/zaehlwerk1/$properties' -m energy -r
+    mosquitto_pub -t 'homie/meter1/zaehlwerk1/energy/$datatype' -m float -r
+
+    2018/12/11 22:28:00 homie: discovered homie/meter1/zaehlwerk1/energy
+
+Start sending actual data:
+
+    mosquitto_pub -t homie/meter1/zaehlwerk1/energy -m 3.14
+
+    2018/12/11 22:28:13 homie: recv (homie/meter1/zaehlwerk1/energy=3.14)
+    2018/12/11 22:28:13 connector: recv from homie (energy=3.140000)
+    2018/12/11 22:28:13 mapper: routing homie -> vz
+    2018/12/11 22:28:13 vz: send POST https://demo.volkszaehler.org/middleware.php/data/energy.json (energy=3.140000)
+    2018/12/11 22:28:13 vz: send failed POST 400 https://demo.volkszaehler.org/middleware.php/data/energy.json
 
 ## Architecture
 
