@@ -6,12 +6,14 @@ import (
 	"github.com/andig/ingress/pkg/config"
 )
 
+// Wire connects source and target with associated mapping
 type Wire struct {
 	Source   string
 	Target   string
 	Mappings [][]Mapping
 }
 
+// Wiring is a list of wires
 type Wiring struct {
 	wires []Wire
 }
@@ -62,6 +64,7 @@ func NewWiring(c []config.Wiring, mappings *Mappings, conn *Connectors) *Wiring 
 	return wiring
 }
 
+// WiresForSource returns all wires connected to given source
 func (w *Wiring) WiresForSource(source string) []Wire {
 	res := make([]Wire, 0)
 

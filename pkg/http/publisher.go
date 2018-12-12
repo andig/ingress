@@ -6,10 +6,12 @@ import (
 	transport "net/http"
 	"strings"
 
+	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 )
 
+// Publisher is the HTTP data target
 type Publisher struct {
 	name    string
 	url     string
@@ -19,7 +21,8 @@ type Publisher struct {
 	client  *transport.Client
 }
 
-func NewFromTargetConfig(c config.Target) *Publisher {
+// NewFromTargetConfig creates HTTP data target
+func NewFromTargetConfig(c config.Target) api.Target {
 	method := strings.ToUpper(c.Method)
 	if method == "" {
 		method = "GET"
@@ -45,9 +48,11 @@ func NewFromTargetConfig(c config.Target) *Publisher {
 	return h
 }
 
+// Discover implements api.Source
 func (h *Publisher) Discover() {
 }
 
+// Publish implements api.Source
 func (h *Publisher) Publish(d data.Data) {
 	url := d.MatchPattern(h.url)
 	log.Printf(h.name+": send %s %s (%s=%f)", h.method, url, d.Name, d.Value)

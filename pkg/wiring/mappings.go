@@ -8,17 +8,19 @@ import (
 	"github.com/andig/ingress/pkg/config"
 )
 
+// Mapping maps data entity from name to name
 type Mapping struct {
 	From string
 	To   string
 }
 
+// Mappings is a list of mappings identified by mapping name
 type Mappings struct {
-	mappings map[string][]Mapping
 	mux      sync.Mutex
+	mappings map[string][]Mapping
 }
 
-// NewWiring creates a system wiring, validatated against available connectors
+// NewMappings creates a system wiring, validatated against available connectors
 func NewMappings(c []config.Mapping, conn *Connectors) *Mappings {
 	mappings := make(map[string][]Mapping, 0)
 
@@ -57,6 +59,7 @@ func (m *Mappings) createMapping(conf config.Mapping, conn *Connectors) {
 	m.mappings[conf.Name] = mapEntries
 }
 
+// MappingsForName returns a list of mappings identified by mapping name
 func (m *Mappings) MappingsForName(name string) ([]Mapping, error) {
 	target, ok := m.mappings[name]
 	if !ok {

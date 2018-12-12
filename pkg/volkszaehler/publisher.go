@@ -11,11 +11,13 @@ import (
 	"github.com/andig/ingress/pkg/data"
 )
 
+// Publisher is the volkszaehler data taerget
 type Publisher struct {
 	*Api
 	name string
 }
 
+// NewFromTargetConfig creates volkszaehler data target
 func NewFromTargetConfig(c config.Target) *Publisher {
 	api := NewAPI(c.URL, 1*time.Second, false)
 	vz := &Publisher{
@@ -25,6 +27,7 @@ func NewFromTargetConfig(c config.Target) *Publisher {
 	return vz
 }
 
+// Discover implements api.Source
 func (vz *Publisher) Discover() {
 	vz.discoverEntities(vz.GetPublicEntities())
 }
@@ -41,6 +44,7 @@ func (vz *Publisher) discoverEntities(entities []Entity) {
 	}
 }
 
+// Publish implements api.Source
 func (vz *Publisher) Publish(d data.Data) {
 	log.Printf(vz.name+": send (%s=%f)", d.Name, d.Value)
 

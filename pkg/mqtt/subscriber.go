@@ -6,13 +6,16 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
 const topicPattern = "([^/]+$)"
 
+// Subscriber is the MQTT data source
 type Subscriber struct {
 	*MqttConnector
 	name      string
@@ -20,7 +23,8 @@ type Subscriber struct {
 	mux       sync.Mutex
 }
 
-func NewFromSourceConfig(c config.Source) *Subscriber {
+// NewFromSourceConfig creates MQTT data source
+func NewFromSourceConfig(c config.Source) api.Source {
 	topic := c.Topic
 	if topic == "" {
 		topic = "#"
@@ -34,6 +38,7 @@ func NewFromSourceConfig(c config.Source) *Subscriber {
 	return mqttSubscriber
 }
 
+// NewSubscriber creates MQTT data source
 func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
 		MqttConnector: &MqttConnector{},
@@ -56,6 +61,7 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 	log.Println(h.name + ": disconnected from " + ServerFromClient(client))
 }
 
+// Run implements api.Source
 func (h *Subscriber) Run(out chan data.Data) {
 	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
 

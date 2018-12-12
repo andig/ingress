@@ -7,12 +7,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
+// Subscriber Homie/MQTT data source
 type Subscriber struct {
 	*mq.MqttConnector
 	name      string
@@ -22,7 +24,8 @@ type Subscriber struct {
 	receiver  chan data.Data
 }
 
-func NewFromSourceConfig(c config.Source) *Subscriber {
+// NewFromSourceConfig creates Homie/MQTT data source
+func NewFromSourceConfig(c config.Source) api.Source {
 	topic := c.Topic
 	if topic == "" {
 		topic = "homie"
@@ -36,6 +39,7 @@ func NewFromSourceConfig(c config.Source) *Subscriber {
 	return homieSubscriber
 }
 
+// NewSubscriber creates Homie/MQTT data source
 func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
 		MqttConnector: &mq.MqttConnector{},
@@ -59,6 +63,7 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 	log.Println(h.name + ": disconnected from " + mq.ServerFromClient(client))
 }
 
+// Run implements api.Source
 func (h *Subscriber) Run(out chan data.Data) {
 	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
 
@@ -91,6 +96,7 @@ func (h *Subscriber) listen(topic string) {
 	})
 }
 
+// Discover implements api.Source
 func (h *Subscriber) Discover() {
 	topic := fmt.Sprintf("%s/+/+/+/%s", h.rootTopic, propDatatype)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {

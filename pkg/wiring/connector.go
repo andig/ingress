@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 
@@ -15,32 +16,21 @@ import (
 	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
-type Target interface {
-	// NewFromTargetConfig(c config.Target)
-	Discover()
-	Publish(d data.Data)
-}
+type sourceMap map[string]api.Source
+type targetMap map[string]api.Target
 
-
-type Source interface {
-	// NewFromSourceConfig(c config.Source)
-	Run(receiver chan data.Data)
-}
-
-type sourceMap map[string]Source
-type targetMap map[string]Target
-
+// Connectors manages data sources and targets
 type Connectors struct {
-	mux    sync.Mutex
-	Source  sourceMap
-	Target targetMap
+	mux      sync.Mutex
+	sources  sourceMap
+	targets  targetMap
 }
 
 // NewConnectors creates the source and output system connectors
 func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 	c := Connectors{
-		Source:  make(sourceMap),
-		Target: make(targetMap),
+		sources:  make(sourceMap),
+		targets: make(targetMap),
 	}
 
 	for _, Source := range i {
@@ -61,7 +51,7 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		log.Fatal("connectors: configuration error - missing source name")
 	}
 
-	var conn Source
+	var conn api.Source
 	switch conf.Type {
 	case "telemetry":
 		conn = telemetry.NewFromSourceConfig(conf)
@@ -79,10 +69,10 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	if _, ok := c.Source[conf.Name]; ok {
-		log.Fatal("connectors: configuration error - cannot redefine Source "+ conf.Name)
+	if _, err := c.SourceForName(conf.Name); err == nil {
+		log.Fatal("connectors: configuration error - cannot redefine source "+ conf.Name)
 	}
-	c.Source[conf.Name] = conn
+	c.sources[conf.Name] = conn
 }
 
 func (c *Connectors) createTargetConnector(conf config.Target) {
@@ -90,7 +80,7 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		log.Fatal("connectors: configuration error - missing target name")
 	}
 
-	var conn Target
+	var conn api.Target
 	switch conf.Type {
 	case "http":
 		conn = http.NewFromTargetConfig(conf)
@@ -108,10 +98,10 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	if _, ok := c.Target[conf.Name]; ok {
-		log.Fatal("connectors: configuration error - cannot redefine output "+ conf.Name)
+	if _, err := c.TargetForName(conf.Name); err == nil {
+		log.Fatal("connectors: configuration error - cannot redefine target "+ conf.Name)
 	}
-	c.Target[conf.Name] = conn
+	c.targets[conf.Name] = conn
 }
 
 // ApplyTelemetry wires metric providers to the Telemetry instance
@@ -119,19 +109,19 @@ func (c *Connectors) ApplyTelemetry() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	
-	for _, Source := range c.Source {
+	for _, Source := range c.sources {
 		// find telemetry instance
 		if instance, ok := Source.(*telemetry.Telemetry); ok {
 			// add metric providers from Source
-			for _, source := range c.Source {
+			for _, source := range c.sources {
 				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
 				}
 			}
 
 			// add metric providers from output
-			for _, source := range c.Target {
-				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
+			for _, target := range c.targets {
+				if metricProvider, ok := target.(telemetry.MetricProvider); ok {
 					instance.AddProvider(metricProvider)
 				}
 			}
@@ -143,16 +133,18 @@ func (c *Connectors) ApplyTelemetry() {
 	}
 }
 
-func (c *Connectors) SourceForName(name string) (Source, error) {
-	source, ok := c.Source[name]
+// SourceForName returns a data source identified by source name
+func (c *Connectors) SourceForName(name string) (api.Source, error) {
+	source, ok := c.sources[name]
 	if !ok {
 		return nil, errors.New("Undefined source "+name)
 	}
 	return source, nil
 }
 
-func (c *Connectors) TargetForName(name string) (Target, error) {
-	target, ok := c.Target[name]
+// TargetForName returns a data target identified by target name
+func (c *Connectors) TargetForName(name string) (api.Target, error) {
+	target, ok := c.targets[name]
 	if !ok {
 		return nil, errors.New("Undefined target "+name)
 	}
@@ -161,7 +153,7 @@ func (c *Connectors) TargetForName(name string) (Target, error) {
 
 // Run starts each Source's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
-	for name, source := range c.Source {
+	for name, source := range c.sources {
 		log.Printf("connector: starting %s", name)
 		c := make(chan data.Data)
 
