@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"time"
 
@@ -62,6 +64,10 @@ func main() {
 			Usage: "Dump parsed config",
 		},
 		cli.BoolFlag{
+			Name:  "diagnose",
+			Usage: "Memory diagnostics",
+		},
+		cli.BoolFlag{
 			Name:  "test, t",
 			Usage: "Inject test data",
 		},
@@ -83,10 +89,22 @@ func main() {
 		mappings := wiring.NewMappings(conf.Mappings, connectors)
 		wires := wiring.NewWiring(conf.Wires, mappings, connectors)
 		mapper := wiring.NewMapper(wires, connectors)
+		_ = mapper
 		go connectors.Run(mapper)
 
 		if c.Bool("test") {
 			inject()
+		}
+
+		if c.Bool("diagnose") {
+			go func() {
+				for {
+					time.Sleep(time.Second)
+					var memstats runtime.MemStats
+					runtime.ReadMemStats(&memstats)
+					fmt.Printf("%db\n", memstats.Alloc)
+				}
+			}()
 		}
 
 		// time.Sleep(3 * time.Second)
