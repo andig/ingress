@@ -5,11 +5,12 @@
 ## Table of Contents
 
 1. [Introduction](#Introduction)
-1. [Quickstart](#Quickstart)
-1. [Architecture](#Architecture)
-2. [Data Sources](#Data%20Sources)
-3. [Backlog](#Backlog)
-4. [References](#References)
+2. [Quickstart](#Quickstart)
+3. [Architecture](#Architecture)
+4. [Data Sources](#Data%20Sources)
+5. [Mappings](#Mappings)
+6. [Backlog](#Backlog)
+7. [References](#References)
 
 ## Introduction
 
@@ -154,6 +155,39 @@ Data source are not neccessarily directly connected to physical devices. For exa
     - `headers`: HTTP headers as key:value pairs (e.g. Content-type: application/json)
     - `method`: HTTP method (default: GET)
     - `payload`: payload template for POST requests
+
+## Mappings
+
+Mappings are optional in the the `ingress` configuration. A mapping translates data entity names between data source and target.
+
+Reusable mappings are defined using the mappings configuration key:
+
+```yaml
+mappings:
+- name: homie-to-volkszaehler
+  entries:
+  - from: energy # homie property name
+  - to: 014648c0-197f-11e8-9f68-afd012b00a13 # volkszaehler uuid
+```
+
+To use a defined mapping it must be assigned to the respective wire:
+
+```yaml
+wires:
+- source: gosdm
+  target: vz
+  mappings:
+  - homie-to-volkszaehler
+```
+
+### Rules
+
+The following rules are applied depending on how mappings are assigned to a wire:
+
+Configuration | Description
+------------- | -----------
+no mapping assigned | Mapping is treated as *pass through*, that is *any* source data is forwarded to the target
+one or more mappings assigned | All assigned mappings are processed in order or definition, starting with the first mapping.<br/> For each mapping, the list of mapping entries is processed in sequence.<br/> If a matching mapping entry is found where `from` matches the received entity's name, the entity name is updated to `to`. Matching is performed by lower-case comparison. No further mapping rules are evaluated.<br/> If no mapping entry matches, the source data is *discarded*, i.e. removed from the wire.
 
 ## Backlog
 

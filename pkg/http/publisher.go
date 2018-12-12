@@ -55,7 +55,7 @@ func (h *Publisher) Discover() {
 // Publish implements api.Source
 func (h *Publisher) Publish(d data.Data) {
 	url := d.MatchPattern(h.url)
-	log.Printf(h.name+": send %s %s (%s=%f)", h.method, url, d.Name, d.Value)
+	log.Printf(h.name+": send %s %s", h.method, url)
 
 	var resp *transport.Response
 	var req *transport.Request

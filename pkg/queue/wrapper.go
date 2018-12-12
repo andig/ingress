@@ -6,10 +6,12 @@ import (
 	pqueue "github.com/eapache/queue"
 )
 
+// Queue is a fast, ring-buffered queue
 type Queue struct {
 	*pqueue.Queue
 }
 
+// New creates Queue
 func New() *Queue {
 	return &Queue{pqueue.New()}
 }
@@ -28,6 +30,7 @@ func recoverWithError() error {
 	return nil
 }
 
+// Peek into queue top
 func (q *Queue) Peek() (res interface{}, err error) {
 	defer func() {
 		err = recoverWithError()
@@ -36,6 +39,7 @@ func (q *Queue) Peek() (res interface{}, err error) {
 	return q.Queue.Peek(), nil
 }
 
+// Get queue element by index
 func (q *Queue) Get(i int) (res interface{}, err error) {
 	defer func() {
 		err = recoverWithError()
@@ -44,6 +48,7 @@ func (q *Queue) Get(i int) (res interface{}, err error) {
 	return q.Queue.Get(i), nil
 }
 
+// Remove top element from queue
 func (q *Queue) Remove() (res interface{}, err error) {
 	defer func() {
 		err = recoverWithError()

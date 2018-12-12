@@ -19,7 +19,7 @@ type Subscriber struct {
 	*mq.MqttConnector
 	name      string
 	rootTopic string
-	mux       sync.Mutex
+	mux       sync.RWMutex
 	devices   []string
 	receiver  chan data.Data
 }
@@ -65,13 +65,12 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 
 // Run implements api.Source
 func (h *Subscriber) Run(out chan data.Data) {
-	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
-
+	h.mux.Lock()
+	defer h.mux.Unlock()
 	h.receiver = out
 }
 
 func (h *Subscriber) listen(topic string) {
-	log.Printf(h.name+": discovered %s", topic)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
@@ -84,6 +83,9 @@ func (h *Subscriber) listen(topic string) {
 			log.Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
 			return
 		}
+
+		h.mux.RLock()
+		defer h.mux.RUnlock()
 
 		if h.receiver != nil {
 			d := data.Data{
@@ -108,78 +110,55 @@ func (h *Subscriber) Discover() {
 		topic = strings.Join(segments[:len(segments)-1], "/")
 
 		if string(datatype) == "float" {
-			h.mux.Lock()
-			defer h.mux.Unlock()
-			h.devices = append(h.devices, topic)
-			h.listen(topic)
+			if h.addDevice(topic) {
+				// print only if not already subscribed
+				log.Printf(h.name+": discovered %s", topic)
+				h.listen(topic)
+			}
+		} else if len(datatype) == 0 {
+			if h.removeDevice(topic) {
+				// print only if already subscribed
+				log.Printf(h.name+": removed %s", topic)
+				h.MqttClient.Unsubscribe(topic)
+			}
 		} else {
 			log.Printf(h.name+": unsupported datatype %s - ignoring %s", datatype, topic)
 		}
 	})
 }
 
-/*
-func (h *Subscriber) discoverDevice(topic string) {
-	segments := strings.Split(topic, "/")
+func (h *Subscriber) deviceIndex(topic string) int {
+	h.mux.RLock()
+	defer h.mux.RUnlock()
 
-	if len(segments) == 4 {
-		log.Printf(h.name+": discovered %s/%s/%s", segments[1], segments[2], segments[3])
-		h.mergeDevice(topic, segments[1], segments[2], segments[3])
-	} else {
-		log.Printf(h.name+": discovered unexpected device %s", topic)
+	for i, dev := range h.devices {
+		if dev == topic {
+			return i
+		}
 	}
+	return -1
 }
 
-func (h *Subscriber) mergeDevice(topic string, deviceName string, nodeName string, propertyName string) {
-	h.mux.Lock()
-	defer h.mux.Unlock()
+func (h *Subscriber) addDevice(topic string) bool {
+	if i := h.deviceIndex(topic); i < 0 {
+		h.mux.Lock()
+		defer h.mux.Unlock()
 
-	// find or create device
-	var device *Device
-	for _, d := range h.Devices {
-		if d.Name == deviceName {
-			device = d
-			break
-		}
+		h.devices = append(h.devices, topic)
+		return true
 	}
-
-	if device == nil {
-		device = &Device{
-			Name: deviceName,
-		}
-		h.Devices = append(h.Devices, device)
-	}
-
-	// find or create node
-	var node *Node
-	for _, n := range device.Nodes {
-		if n.Name == nodeName {
-			node = n
-			break
-		}
-	}
-
-	if node == nil {
-		node = &Node{
-			Name: nodeName,
-		}
-		device.Nodes = append(device.Nodes, node)
-	}
-
-	// find or create property
-	var property *Property
-	for _, p := range node.Properties {
-		if p.Name == propertyName {
-			property = p
-			break
-		}
-	}
-
-	if property == nil {
-		property = &Property{
-			Name: propertyName,
-		}
-		node.Properties = append(node.Properties, property)
-	}
+	return false
 }
-*/
+
+func (h *Subscriber) removeDevice(topic string) bool {
+	if i := h.deviceIndex(topic); i >= 0 {
+		h.mux.Lock()
+		defer h.mux.Unlock()
+
+		// remove element i by moving last element to its position
+		h.devices[i] = h.devices[len(h.devices)-1]
+		h.devices = h.devices[:len(h.devices)-1]
+		return true
+	}
+	return false
+}

@@ -16,21 +16,18 @@ import (
 	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
-type sourceMap map[string]api.Source
-type targetMap map[string]api.Target
-
 // Connectors manages data sources and targets
 type Connectors struct {
 	mux      sync.Mutex
-	sources  sourceMap
-	targets  targetMap
+	sources  map[string]api.Source
+	targets  map[string]api.Target
 }
 
 // NewConnectors creates the source and output system connectors
 func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 	c := Connectors{
-		sources:  make(sourceMap),
-		targets: make(targetMap),
+		sources: make(map[string]api.Source),
+		targets: make(map[string]api.Target),
 	}
 
 	for _, Source := range i {
@@ -162,7 +159,7 @@ func (c *Connectors) Run(mapper *Mapper) {
 			for {
 				d := <-c
 				log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)
-				go mapper.Process(name, &d)
+				go mapper.Process(name, d)
 			}
 		}(name, c)
 

@@ -23,6 +23,7 @@ targets:
 - name: vz
   type: http
   url: https://demo.volkszaehler.org/middleware.php/data/%name%.json
+#   url: http://localhost
   method: POST
   headers:
     Content-type: application/json
@@ -32,10 +33,10 @@ targets:
 # - name: vz
 #   type: volkszaehler
 #   url: https://demo.volkszaehler.org/
-# - name: mqtt-pub
-#   type: mqtt
-#   url: tcp://localhost:1883
-#   topic: output/node/%name%
+- name: mqtt-pub
+  type: mqtt
+  url: tcp://localhost:1883
+  topic: telemetry/%name%
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
@@ -47,12 +48,12 @@ wires:
   - vz
 #   - mqtt-pub
   mappings:
-  - direct
+  - homie-to-volkszaehler
 
 # Mappings configure which source topic is mapped to which target topics
 # Mappings are reusable across wirings
 mappings:
-- name: direct
+- name: homie-to-volkszaehler
   entries:
-  - from: zaehlerstand
-    to: foobar
+  - from: energy
+    to: 014648c0-197f-11e8-9f68-afd012b00a13
