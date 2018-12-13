@@ -43,7 +43,6 @@ type Wiring struct {
 type MapEntry struct {
 	From string
 	To   string
-	Uuid string
 }
 
 type Mapping struct {
@@ -76,7 +75,7 @@ func (c *Config) Load(file string) *Config {
 // Dump dumps parsed config to console
 func (c *Config) Dump() {
 	fmt.Println("Parsed configuration")
-	fmt.Println("--------------------")
+	fmt.Println("---")
 
 	d, err := yaml.Marshal(c)
 	if err != nil {

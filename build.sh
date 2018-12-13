@@ -6,7 +6,7 @@ CMDS=$(go list -f '{{if (eq .Name "main")}}{{.ImportPath}}{{end}}' ./...)
 
 mkdir -p $RELEASE
 mkdir -p $BIN
-if ls *.zip 1>/dev/null 2>&1; then rm *.zip; fi
+if ls $RELEASE/*.zip 1>/dev/null 2>&1; then rm $RELEASE/*.zip; fi
 
 function build {
 	GOOS=$1
@@ -25,15 +25,15 @@ function build {
 }
 
 echo "Building for ..."
-echo "... Linux/32bit"
-build linux 386
+# echo "... Linux/32bit"
+# build linux 386
 echo "... Linux/64bit"
 build linux amd64
 echo "... Raspberry Pi/Linux"
 build linux arm 5
-echo "... Mac OS/64bit"
-build darwin amd64
-echo "... Windows/32bit"
-build windows 386
-echo "... Windows/64bit"
-build windows amd64
+# echo "... Mac OS/64bit"
+# build darwin amd64
+# echo "... Windows/32bit"
+# build windows 386
+# echo "... Windows/64bit"
+# build windows amd64

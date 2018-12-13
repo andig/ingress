@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -38,7 +39,6 @@ func (d *Data) ValStr() string {
 
 func (d *Data) MatchPattern(s string) string {
 	matches := patternRegex.FindAllString(s, -1)
-
 	for _, match := range matches {
 		switch match {
 		case "%id%":
@@ -48,7 +48,7 @@ func (d *Data) MatchPattern(s string) string {
 		case "%value%":
 			s = strings.Replace(s, match, d.ValStr(), -1)
 		case "%timestamp%":
-			s = strings.Replace(s, match, string(d.Timestamp), -1)
+			s = strings.Replace(s, match, strconv.FormatInt(d.Timestamp, 10), -1)
 		}
 	}
 
