@@ -194,10 +194,16 @@ one or more mappings assigned | All assigned mappings are processed in order or 
 
 ## Backlog
 
-- WebSocket data source
-- [GoElster](https://github.com/andig/goelster) CANBus data source
+- data aggregation
+- daemon mode
+- web ui
+- API
+- auto-setup Volkszaehler form ingress or vice versa
+- web socket data source
+- [GoElster] CANBus data source
 
 [Volkszähler]: https://volkszaehler.org
-[GoSDM]: https://github.com/gonium/gosdm630
 [Homie]: https://homieiot.github.io
 [Mosquitto]: https://mosquitto.org
+[GoSDM]: https://github.com/gonium/gosdm630
+[GoElster]: https://github.com/andig/goelster
