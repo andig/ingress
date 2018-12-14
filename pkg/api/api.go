@@ -11,6 +11,5 @@ type Source interface {
 // Target is the interface data targets must implement
 type Target interface {
 	// NewFromTargetConfig(c config.Target)
-	Discover()
 	Publish(d data.Data)
 }

@@ -31,10 +31,12 @@ func inject() {
 		log.Println("--> inject done")
 	}
 
-	token = mqttClient.Publish("homie/meter1/zaehlwerk1/power", 0, false, "4711")
-	if token.WaitTimeout(100 * time.Millisecond) {
-		log.Println("--> inject done")
-	}
+	mqttClient.Publish("homie/meter1/$nodes", 1, true, "zaehlwerk1")
+	mqttClient.Publish("homie/meter1/zaehlwerk1/$properties", 1, true, "power")
+	mqttClient.Publish("homie/meter1/zaehlwerk1/power/$name", 1, true, "Leistung")
+	mqttClient.Publish("homie/meter1/zaehlwerk1/power/$unit", 1, true, "W")
+	mqttClient.Publish("homie/meter1/zaehlwerk1/power/$datatype", 1, true, "float")
+	mqttClient.Publish("homie/meter1/zaehlwerk1/power", 1, false, "3048")
 }
 
 func checkVersion() {
