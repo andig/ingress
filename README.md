@@ -1,5 +1,8 @@
 # ingress
 
+[![Build status](https://travis-ci.org/andig/ingress.svg?branch=master)](https://travis-ci.org/andig/ingress)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HWZTN5AU8LSUC)
+
 `ingress` is a universal data ingestion and mapping daemon aimed at use with, but not limited to, the [Volkszähler] smart meter framework.
 
 ## Table of Contents
