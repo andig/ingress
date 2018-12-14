@@ -14,6 +14,7 @@ import (
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/tcnksm/go-latest"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -21,7 +22,7 @@ func inject() {
 	mqttOptions := NewMqttClientOptions("tcp://localhost:1883", "", "")
 	mqttClient := mqtt.NewClient(mqttOptions)
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("mqtt: error connecting: ", token.Error())
+		log.Fatalf("mqtt: error connecting: %s", token.Error())
 	}
 
 	time.Sleep(200 * time.Millisecond)
@@ -36,7 +37,20 @@ func inject() {
 	}
 }
 
-func WaitForCtrlC() {
+func checkVersion() {
+	githubTag := &latest.GithubTag{
+		Owner:      "andig",
+		Repository: "ingress",
+	}
+
+	if res, err := latest.Check(githubTag, tag); err == nil {
+		if res.Outdated {
+			log.Printf("updates available - please upgrade to ingress %s", res.Current)
+		}
+	}
+}
+
+func waitForCtrlC() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	channel := make(chan os.Signal, 1)
@@ -52,7 +66,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "ingress"
 	app.Usage = "ingress data mapper daemon"
-	app.HideVersion = true
+	app.Version = version
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
@@ -85,6 +99,8 @@ func main() {
 			conf.Dump()
 		}
 
+		go checkVersion()
+
 		connectors := wiring.NewConnectors(conf.Sources, conf.Targets)
 		mappings := wiring.NewMappings(conf.Mappings, connectors)
 		wires := wiring.NewWiring(conf.Wires, mappings, connectors)
@@ -108,7 +124,7 @@ func main() {
 		}
 
 		// time.Sleep(3 * time.Second)
-		WaitForCtrlC()
+		waitForCtrlC()
 	}
 
 	app.Run(os.Args)
