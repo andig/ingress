@@ -1,11 +1,14 @@
 sudo: false
 language: go
 go:
-- "1.11"
-- "master"
+  - "1.11"
+  - "master"
 go_import_path: github.com/andig/ingress
 env:
-- "PATH=/home/travis/gopath/bin:$PATH"
+  - "PATH=/home/travis/gopath/bin:$PATH"
+before_script:
+  - echo $GO111MODULE
+  - export GO111MODULE=on
 script:
-- make
-- go test ./...
+  - make
+  - go test ./...
