@@ -1,10 +1,15 @@
 package homie
 
+import "time"
+
 const (
 	propState      = "$state"
 	propStateReady = "ready"
 	propStateLost  = "lost"
 
-	propDatatype      = "$datatype"
-	propDatatypeFloat = "float"
+	propName     = "$name"
+	propUnit     = "$unit"
+	propDatatype = "$datatype"
+
+	timeout = 500 * time.Millisecond
 )

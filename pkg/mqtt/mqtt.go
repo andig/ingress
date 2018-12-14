@@ -7,6 +7,8 @@ import (
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
+const defaultTimeout = 2000 * time.Millisecond
+
 func NewMqttClientOptions(url string, user string, password string) *mqtt.ClientOptions {
 	if url == "" {
 		url = "tcp://localhost:1883"
@@ -47,14 +49,16 @@ func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
 	}
 }
 
-func (m *MqttConnector) WaitForToken(token mqtt.Token) {
-	if token.WaitTimeout(2000 * time.Millisecond) {
+// WaitForToken returns if  an mqtt operation finished within timespan
+func (m *MqttConnector) WaitForToken(token mqtt.Token, timeout time.Duration) bool {
+	if token.WaitTimeout(timeout) {
 		if token.Error() != nil {
 			log.Printf("mqtt: error: %s", token.Error())
+			return false
 		}
 	} else {
-		// if m.verbose {
 		log.Printf("mqtt: timeout")
-		// }
+		return false
 	}
+	return true
 }

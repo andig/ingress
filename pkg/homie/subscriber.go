@@ -70,7 +70,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 	h.receiver = out
 }
 
-func (h *Subscriber) listen(topic string) {
+func (h *Subscriber) listenToProperty(topic string) {
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
 		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
@@ -98,6 +98,26 @@ func (h *Subscriber) listen(topic string) {
 	})
 }
 
+func (h *Subscriber) listenForPropertyDefinition(topic string) bool {
+	var name string
+	var unit string
+
+	topic = fmt.Sprintf("%s/%s", topic, propName)
+	token1 := h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+		name = string(msg.Payload())
+	})
+
+	topic = fmt.Sprintf("%s/%s", topic, propUnit)
+	token2 := h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+		unit = string(msg.Payload())
+	})
+
+	if h.WaitForToken(token1, timeout) && h.WaitForToken(token2, timeout) {
+		log.Printf(h.name+": found property description for %s (name=%s, unit=%s)", topic, name, unit)
+	}
+	return true
+}
+
 // Discover implements api.Source
 func (h *Subscriber) Discover() {
 	topic := fmt.Sprintf("%s/+/+/+/%s", h.rootTopic, propDatatype)
@@ -109,17 +129,17 @@ func (h *Subscriber) Discover() {
 		segments := strings.Split(topic, "/")
 		topic = strings.Join(segments[:len(segments)-1], "/")
 
-		if string(datatype) == "float" {
-			if h.addDevice(topic) {
-				// print only if not already subscribed
-				log.Printf(h.name+": discovered %s", topic)
-				h.listen(topic)
-			}
-		} else if len(datatype) == 0 {
+		if len(datatype) == 0 {
 			if h.removeDevice(topic) {
 				// print only if already subscribed
 				log.Printf(h.name+": removed %s", topic)
 				h.MqttClient.Unsubscribe(topic)
+			}
+		} else if string(datatype) == "float" {
+			if h.listenForPropertyDefinition(topic) && h.addDevice(topic) {
+				// print only if not already subscribed
+				log.Printf(h.name+": discovered %s", topic)
+				h.listenToProperty(topic)
 			}
 		} else {
 			log.Printf(h.name+": unsupported datatype %s - ignoring %s", datatype, topic)

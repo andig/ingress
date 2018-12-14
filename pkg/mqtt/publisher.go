@@ -61,7 +61,7 @@ func (h *Publisher) Publish(d data.Data) {
 	log.Printf(h.name+": send (%s=%s)", topic, message)
 
 	token := h.MqttClient.Publish(topic, 1, false, message)
-	h.WaitForToken(token)
+	h.WaitForToken(token, defaultTimeout)
 }
 
 // Discover implements api.Source
