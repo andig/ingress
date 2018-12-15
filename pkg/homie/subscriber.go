@@ -20,6 +20,7 @@ type Subscriber struct {
 	*mq.MqttConnector
 	name      string
 	rootTopic string
+	qos       byte
 	mux       sync.RWMutex
 	props     *PropertySet
 	receiver  chan data.Data
@@ -45,6 +46,7 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 		MqttConnector: &mq.MqttConnector{},
 		name:          name,
 		rootTopic:     mq.StripTrailingSlash(rootTopic),
+		qos:           1,
 		props:         NewPropertySet(),
 	}
 
@@ -65,20 +67,18 @@ func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
 
 // Run implements api.Source
 func (h *Subscriber) Run(out chan data.Data) {
+	// start publishing
+	h.receiver = out
+
 	// discover homie devices
 	topic := fmt.Sprintf("%s/+/+/%s", h.rootTopic, propProperties)
-	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+	h.MqttClient.Subscribe(topic, h.qos, func(c mqtt.Client, msg mqtt.Message) {
 		// strip $properties
 		segments := strings.Split(msg.Topic(), "/")
 		topic = strings.Join(segments[:len(segments)-1], "/")
 		properties := strings.Split(string(msg.Payload()), ",")
 		go h.propertyChangeHandler(topic, properties)
 	})
-
-	// start publishing
-	h.mux.Lock()
-	defer h.mux.Unlock()
-	h.receiver = out
 }
 
 // propertyChangeHandler handles changes to node's property definition
@@ -121,13 +121,14 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	}
 }
 
+// validateProperty collects property definition from $ subtopics
 func (h *Subscriber) validateProperty(topic string) bool {
 	var mux sync.Mutex
 	def := make(map[string][]byte)
 
 	// listen to property definition
 	propertyDefinition := topic + "/+"
-	h.MqttClient.Subscribe(propertyDefinition, 1, func(c mqtt.Client, msg mqtt.Message) {
+	h.MqttClient.Subscribe(propertyDefinition, h.qos, func(c mqtt.Client, msg mqtt.Message) {
 		mux.Lock()
 		defer mux.Unlock()
 		def[msg.Topic()] = msg.Payload()
@@ -150,7 +151,7 @@ func (h *Subscriber) validateProperty(topic string) bool {
 }
 
 func (h *Subscriber) subscribeToProperty(topic string) {
-	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
+	h.MqttClient.Subscribe(topic, h.qos, func(c mqtt.Client, msg mqtt.Message) {
 		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		segments := strings.Split(msg.Topic(), "/")
@@ -163,16 +164,11 @@ func (h *Subscriber) subscribeToProperty(topic string) {
 			return
 		}
 
-		h.mux.RLock()
-		defer h.mux.RUnlock()
-
-		if h.receiver != nil {
-			d := data.Data{
-				Name:  name,
-				Value: value,
-			}
-
-			h.receiver <- d
+		d := data.Data{
+			Name:  name,
+			Value: value,
 		}
+
+		h.receiver <- d
 	})
 }
