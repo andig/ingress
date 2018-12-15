@@ -21,7 +21,7 @@ type Subscriber struct {
 	name      string
 	rootTopic string
 	mux       sync.RWMutex
-	devices   []string
+	props     *PropertySet
 	receiver  chan data.Data
 }
 
@@ -45,7 +45,7 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 		MqttConnector: &mq.MqttConnector{},
 		name:          name,
 		rootTopic:     mq.StripTrailingSlash(rootTopic),
-		devices:       make([]string, 0),
+		props:         NewPropertySet(),
 	}
 
 	// connection lost handler
@@ -68,23 +68,11 @@ func (h *Subscriber) Run(out chan data.Data) {
 	// discover homie devices
 	topic := fmt.Sprintf("%s/+/+/%s", h.rootTopic, propProperties)
 	h.MqttClient.Subscribe(topic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		topic := msg.Topic()
-		properties := strings.Split(string(msg.Payload()), ",")
-
 		// strip $properties
-		segments := strings.Split(topic, "/")
+		segments := strings.Split(msg.Topic(), "/")
 		topic = strings.Join(segments[:len(segments)-1], "/")
-
-		// remove properties before re-adding
-		h.removePropertiesForNode(topic)
-
-		// add properties
-		for _, property := range properties {
-			go func(property string) {
-				propertyTopic := fmt.Sprintf("%s/%s", topic, property)
-				h.validateProperty(propertyTopic)
-			}(property)
-		}
+		properties := strings.Split(string(msg.Payload()), ",")
+		go h.propertyChangeHandler(topic, properties)
 	})
 
 	// start publishing
@@ -93,29 +81,53 @@ func (h *Subscriber) Run(out chan data.Data) {
 	h.receiver = out
 }
 
-func (h *Subscriber) removePropertiesForNode(topic string) {
-	h.mux.Lock()
-	defer h.mux.Unlock()
+// propertyChangeHandler handles changes to node's property definition
+func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
+	var wg sync.WaitGroup
+	wg.Add(len(properties))
 
-	topic += "/"
-	for i, dev := range h.devices {
-		if strings.Index(dev, topic) == 0 {
-			log.Printf(h.name+": removed %s", dev)
-			h.MqttClient.Unsubscribe(topic)
+	// add properties
+	for _, property := range properties {
+		go func(property string) {
+			propertyTopic := fmt.Sprintf("%s/%s", topic, property)
+			if h.validateProperty(propertyTopic) {
+				if h.props.Add(propertyTopic) {
+					// print only if not already subscribed
+					log.Printf(h.name+": discovered %s", propertyTopic)
+					h.subscribeToProperty(topic)
+				}
+			}
+			wg.Done()
+		}(property)
+	}
 
-			// remove element i by moving last element to its position
-			h.devices[i] = h.devices[len(h.devices)-1]
-			h.devices = h.devices[:len(h.devices)-1]
+	// wait until properties are merged to remove remaining ones
+	wg.Wait()
+
+	// remove obsolete properties
+	newProps := NewPropertySet()
+	for _, property := range properties {
+		newProps.Add(fmt.Sprintf("%s/%s", topic, property))
+	}
+
+	nodeProps := h.props.Match(topic + "/")
+	for _, old := range nodeProps {
+		if !newProps.Contains(old) {
+			if h.props.Remove(old) {
+				log.Printf(h.name+": removed %s", old)
+			}
+			h.MqttClient.Unsubscribe(old)
 		}
 	}
 }
 
-func (h *Subscriber) validateProperty(topic string) {
+func (h *Subscriber) validateProperty(topic string) bool {
 	var mux sync.Mutex
 	def := make(map[string][]byte)
 
 	// listen to property definition
-	h.MqttClient.Subscribe(topic+"/+", 1, func(c mqtt.Client, msg mqtt.Message) {
+	propertyDefinition := topic + "/+"
+	h.MqttClient.Subscribe(propertyDefinition, 1, func(c mqtt.Client, msg mqtt.Message) {
 		mux.Lock()
 		defer mux.Unlock()
 		def[msg.Topic()] = msg.Payload()
@@ -126,19 +138,15 @@ func (h *Subscriber) validateProperty(topic string) {
 	case <-time.After(timeout):
 		mux.Lock()
 		defer mux.Unlock()
-		h.MqttClient.Unsubscribe(topic)
+		h.MqttClient.Unsubscribe(propertyDefinition)
 	}
 
 	// parse property definition
 	if datatype, ok := def[fmt.Sprintf("%s/%s", topic, propDatatype)]; ok {
-		if string(datatype) == "float" {
-			if h.addDevice(topic) {
-				// print only if not already subscribed
-				log.Printf(h.name+": discovered %s", topic)
-				h.subscribeToProperty(topic)
-			}
-		}
+		return string(datatype) == "float"
 	}
+
+	return false
 }
 
 func (h *Subscriber) subscribeToProperty(topic string) {
@@ -167,27 +175,4 @@ func (h *Subscriber) subscribeToProperty(topic string) {
 			h.receiver <- d
 		}
 	})
-}
-
-func (h *Subscriber) addDevice(topic string) bool {
-	if i := h.deviceIndex(topic); i < 0 {
-		h.mux.Lock()
-		defer h.mux.Unlock()
-
-		h.devices = append(h.devices, topic)
-		return true
-	}
-	return false
-}
-
-func (h *Subscriber) deviceIndex(topic string) int {
-	h.mux.RLock()
-	defer h.mux.RUnlock()
-
-	for i, dev := range h.devices {
-		if dev == topic {
-			return i
-		}
-	}
-	return -1
 }

@@ -27,11 +27,6 @@ func NewFromTargetConfig(c config.Target) *Publisher {
 	return vz
 }
 
-// Discover implements api.Source
-func (vz *Publisher) Discover() {
-	vz.discoverEntities(vz.GetPublicEntities())
-}
-
 func (vz *Publisher) discoverEntities(entities []Entity) {
 	for _, e := range entities {
 		log.Printf(vz.name+": %s %s: %s", e.UUID, e.Type, e.Title)
