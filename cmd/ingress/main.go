@@ -68,7 +68,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "ingress"
 	app.Usage = "ingress data mapper daemon"
-	app.Version = version
+	app.Version = fmt.Sprintf("%s (https://github.com/andig/ingress/commit/%s)", tag, hash)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",

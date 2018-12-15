@@ -8,6 +8,6 @@ package main
 
 const (
 	tag = "$TAG"
-	version = "$HASH (https://github.com/andig/ingress/commit/$HASH)"
+	hash = "$HASH"
 )
 EOF
