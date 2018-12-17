@@ -3,6 +3,7 @@ package wiring
 import (
 	"errors"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/andig/ingress/pkg/api"
@@ -30,11 +31,11 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 		targets: make(map[string]api.Target),
 	}
 
-	for _, Source := range i {
-		c.createSourceConnector(Source)
+	for _, source := range i {
+		c.createSourceConnector(source)
 	}
-	for _, output := range o {
-		c.createTargetConnector(output)
+	for _, target := range o {
+		c.createTargetConnector(target)
 	}
 
 	// activate telemetry if configured
@@ -49,7 +50,7 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 	}
 
 	var conn api.Source
-	switch conf.Type {
+	switch strings.ToLower(conf.Type) {
 	case "telemetry":
 		conn = telemetry.NewFromSourceConfig(conf)
 		break
@@ -60,7 +61,7 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		conn = homie.NewFromSourceConfig(conf)
 		break
 	default:
-		log.Fatal("connectors: invalid Source type: " + conf.Type)
+		log.Fatal("connectors: invalid source type: " + conf.Type)
 	}
 
 	c.mux.Lock()

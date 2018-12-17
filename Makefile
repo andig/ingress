@@ -1,4 +1,4 @@
-.PHONY: all release clean
+.PHONY: all release clean test run
 
 PWD := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BIN := $(PWD)/bin
@@ -14,5 +14,8 @@ release:
 clean:
 	tools/clean.sh
 
+test:
+	go test ./...
+	
 run:
 	go run -race github.com/andig/ingress/cmd/ingress

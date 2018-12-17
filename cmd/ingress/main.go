@@ -104,9 +104,11 @@ func main() {
 		go checkVersion()
 
 		connectors := wiring.NewConnectors(conf.Sources, conf.Targets)
+		actions := wiring.NewActions(conf.Actions)
 		mappings := wiring.NewMappings(conf.Mappings, connectors)
 		wires := wiring.NewWiring(conf.Wires, mappings, connectors)
 		mapper := wiring.NewMapper(wires, connectors)
+		_ = actions
 		_ = mapper
 		go connectors.Run(mapper)
 

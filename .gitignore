@@ -1,3 +1,7 @@
 *.pid
 bin
 release
+assets
+version.go
+embed.json
+embeddedassets.go

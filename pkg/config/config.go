@@ -34,10 +34,11 @@ type Target struct {
 	Payload     string
 }
 
-type Wiring struct {
+type Wire struct {
 	Sources  []string `yaml:"sources"`
 	Targets  []string `yaml:"targets"`
 	Mappings []string `yaml:"mappings"`
+	Actions  []string `yaml:"actions"`
 }
 
 type MapEntry struct {
@@ -50,11 +51,18 @@ type Mapping struct {
 	Map  []MapEntry `yaml:"entries"`
 }
 
+type Action struct {
+	Name string `yaml:"name"`
+	Type string `yaml:"type"`
+	Mode string `yaml:"mode"`
+}
+
 type Config struct {
 	Sources  []Source  `yaml:"sources"`
 	Targets  []Target  `yaml:"targets"`
-	Wires    []Wiring  `yaml:"wires"`
+	Wires    []Wire    `yaml:"wires"`
 	Mappings []Mapping `yaml:"mappings"`
+	Actions  []Action  `yaml:"actions"`
 }
 
 // Load loads and parses configuration from file

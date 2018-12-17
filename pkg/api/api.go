@@ -13,3 +13,9 @@ type Target interface {
 	// NewFromTargetConfig(c config.Target)
 	Publish(d data.Data)
 }
+
+// Action is the interface data targets must implement
+type Action interface {
+	// NewFromActionConfig(c config.Action)
+	Process(d data.Data)
+}

@@ -13,7 +13,7 @@
 4. [Data Sources](#Data%20Sources)
 5. [Mappings](#Mappings)
 6. [Backlog](#Backlog)
-7. [References](#References)
+7. [Frequently asked questions](#Frequently%20asked%20questions)
 
 ## Introduction
 
@@ -191,6 +191,16 @@ Configuration | Description
 ------------- | -----------
 no mapping assigned | Mapping is treated as *pass through*, that is *any* source data is forwarded to the target
 one or more mappings assigned | All assigned mappings are processed in order or definition, starting with the first mapping.<br/> For each mapping, the list of mapping entries is processed in sequence.<br/> If a matching mapping entry is found where `from` matches the received entity's name, the entity name is updated to `to`. Matching is performed by lower-case comparison. No further mapping rules are evaluated.<br/> If no mapping entry matches, the source data is *discarded*, i.e. removed from the wire.
+
+## Frequently asked questions
+
+1. `ingress` doesn't work as expected
+
+   `ingress` is work in progress. To verify that `ingress` even understands your configuration run 
+
+       ingress --dump
+
+   to show what configuration ingress understood. If it looks correct feel free to open an issue. Always attach your configuration to the issue.
 
 ## Backlog
 

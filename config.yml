@@ -49,6 +49,8 @@ wires:
 #   - mqtt-pub
   mappings:
   - homie-to-volkszaehler
+  actions:
+  - agg5min
 
 # Mappings configure which source topic is mapped to which target topics
 # Mappings are reusable across wirings
@@ -57,3 +59,9 @@ mappings:
   entries:
   - from: energy
     to: 014648c0-197f-11e8-9f68-afd012b00a13
+
+## Actions transform data submitted to a wire
+actions:
+- name: agg5min
+  type: aggregate
+  mode: avg

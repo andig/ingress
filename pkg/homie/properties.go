@@ -5,31 +5,49 @@ import (
 	"sync"
 )
 
+// PropertySet provides common operations on list of properties
 type PropertySet struct {
-	props []string
+	props map[string]bool
 	mux   sync.RWMutex
 }
 
+// NewPropertySet creates PropertySet
 func NewPropertySet(props ...string) *PropertySet {
+	propMap := make(map[string]bool)
+	for _, prop := range props {
+		propMap[prop] = true
+	}
 	return &PropertySet{
-		props: props,
+		props: propMap,
 	}
 }
 
-func (p *PropertySet) Get() []string {
+// Get returns property by name
+func (p *PropertySet) Get(s string) interface{} {
+	return p.props[s]
+}
+
+// All returns all properties of the set
+func (p *PropertySet) All() []string {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 
-	return p.props
+	keys := make([]string, 0, len(p.props))
+	for prop := range p.props {
+		keys = append(keys, prop)
+	}
+
+	return keys
 }
 
+// Match returns all properties starting with match
 func (p *PropertySet) Match(s string) []string {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 
 	properties := make([]string, 0)
-	for _, property := range p.props {
-		if strings.Index(property, s) == 0 {
+	for property := range p.props {
+		if strings.HasPrefix(property, s) {
 			properties = append(properties, property)
 		}
 	}
@@ -37,42 +55,34 @@ func (p *PropertySet) Match(s string) []string {
 	return properties
 }
 
+// Contains checks if match is contained in the list
 func (p *PropertySet) Contains(s string) bool {
-	return p.indexOf(s) >= 0
+	_, ok := p.props[s]
+	return ok
 }
 
-func (p *PropertySet) indexOf(s string) int {
-	for i, prop := range p.props {
-		if prop == s {
-			return i
-		}
-	}
-
-	return -1
-}
-
+// Add adds an entry to the set
 func (p *PropertySet) Add(s string) bool {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if i := p.indexOf(s); i < 0 {
-		p.props = append(p.props, s)
-		return true
+	if p.Contains(s) {
+		return false
 	}
 
-	return false
+	p.props[s] = true
+	return true
 }
 
+// Remove removes an entry from the set
 func (p *PropertySet) Remove(s string) bool {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if i := p.indexOf(s); i >= 0 {
-		// remove element i by moving last element to its position
-		p.props[i] = p.props[len(p.props)-1]
-		p.props = p.props[:len(p.props)-1]
-		return true
+	if !p.Contains(s) {
+		return false
 	}
 
-	return false
+	delete(p.props, s)
+	return true
 }
