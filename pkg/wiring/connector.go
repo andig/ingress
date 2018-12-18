@@ -1,10 +1,8 @@
 package wiring
 
 import (
-	"errors"
 	"log"
 	"strings"
-	"sync"
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
@@ -19,16 +17,15 @@ import (
 
 // Connectors manages data sources and targets
 type Connectors struct {
-	mux      sync.Mutex
-	sources  map[string]api.Source
-	targets  map[string]api.Target
+	sources  *data.Set
+	targets  *data.Set
 }
 
 // NewConnectors creates the source and output system connectors
 func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 	c := Connectors{
-		sources: make(map[string]api.Source),
-		targets: make(map[string]api.Target),
+		sources: data.NewSet(),
+		targets: data.NewSet(),
 	}
 
 	for _, source := range i {
@@ -46,7 +43,7 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 
 func (c *Connectors) createSourceConnector(conf config.Source) {
 	if conf.Name == "" {
-		log.Fatal("connectors: configuration error - missing source name")
+		log.Fatal("configuration error: missing source name")
 	}
 
 	var conn api.Source
@@ -61,21 +58,17 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		conn = homie.NewFromSourceConfig(conf)
 		break
 	default:
-		log.Fatal("connectors: invalid source type: " + conf.Type)
+		log.Fatal("configuration error: invalid source type: " + conf.Type)
 	}
 
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	if _, err := c.SourceForName(conf.Name); err == nil {
-		log.Fatal("connectors: configuration error - cannot redefine source "+ conf.Name)
+	if !c.sources.Add(conf.Name, conn) {
+		log.Fatal("configuration error: cannot redefine source "+ conf.Name)
 	}
-	c.sources[conf.Name] = conn
 }
 
 func (c *Connectors) createTargetConnector(conf config.Target) {
 	if conf.Name == "" {
-		log.Fatal("connectors: configuration error - missing target name")
+		log.Fatal("configuration error: missing target name")
 	}
 
 	var conn api.Target
@@ -93,65 +86,42 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		log.Fatal("Invalid output type: " + conf.Type)
 	}
 
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	if _, err := c.TargetForName(conf.Name); err == nil {
-		log.Fatal("connectors: configuration error - cannot redefine target "+ conf.Name)
+	if !c.targets.Add(conf.Name, conn) {
+		log.Fatal("configuration error: cannot redefine target "+ conf.Name)
 	}
-	c.targets[conf.Name] = conn
 }
 
 // ApplyTelemetry wires metric providers to the Telemetry instance
 func (c *Connectors) ApplyTelemetry() {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	
-	for _, Source := range c.sources {
-		// find telemetry instance
-		if instance, ok := Source.(*telemetry.Telemetry); ok {
-			// add metric providers from Source
-			for _, source := range c.sources {
-				if metricProvider, ok := source.(telemetry.MetricProvider); ok {
-					instance.AddProvider(metricProvider)
-				}
-			}
-
-			// add metric providers from output
-			for _, target := range c.targets {
-				if metricProvider, ok := target.(telemetry.MetricProvider); ok {
-					instance.AddProvider(metricProvider)
-				}
-			}
-
-			// log.Println("connector: activated metrics collection")
-			log.Println("enabled metrics collection")
-			return
+	 for _, v := range c.sources.Values() {
+		instance, ok := v.(telemetry.Telemetry)
+		if !ok {
+			continue
 		}
-	}
-}
+	 
+		// add metric providers from Source
+		for _, source := range c.sources.Values() {
+			if metricProvider, ok := source.(telemetry.MetricProvider); ok {
+				instance.AddProvider(metricProvider)
+			}
+		}
 
-// SourceForName returns a data source identified by source name
-func (c *Connectors) SourceForName(name string) (api.Source, error) {
-	source, ok := c.sources[name]
-	if !ok {
-		return nil, errors.New("Undefined source "+name)
-	}
-	return source, nil
-}
+		// add metric providers from output
+		for _, target := range c.targets.Values() {
+			if metricProvider, ok := target.(telemetry.MetricProvider); ok {
+				instance.AddProvider(metricProvider)
+			}
+		}
 
-// TargetForName returns a data target identified by target name
-func (c *Connectors) TargetForName(name string) (api.Target, error) {
-	target, ok := c.targets[name]
-	if !ok {
-		return nil, errors.New("Undefined target "+name)
+		// log.Println("connector: activated metrics collection")
+		log.Println("enabled metrics collection")
 	}
-	return target, nil
 }
 
 // Run starts each Source's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
-	for name, source := range c.sources {
+	for _,name := range c.sources.Keys() {
+		source := c.sources.Get(name).(api.Source)
 		log.Printf("connector: starting %s", name)
 		c := make(chan data.Data)
 

@@ -22,7 +22,7 @@ type Subscriber struct {
 	rootTopic string
 	qos       byte
 	mux       sync.RWMutex
-	props     *PropertySet
+	props     *data.Set
 	receiver  chan data.Data
 }
 
@@ -47,7 +47,7 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 		name:          name,
 		rootTopic:     mq.StripTrailingSlash(rootTopic),
 		qos:           1,
-		props:         NewPropertySet(),
+		props:         data.NewSet(),
 	}
 
 	// connection lost handler
@@ -91,7 +91,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 		go func(property string) {
 			propertyTopic := fmt.Sprintf("%s/%s", topic, property)
 			if h.validateProperty(propertyTopic) {
-				if h.props.Add(propertyTopic) {
+				if h.props.Add(propertyTopic, true) {
 					// print only if not already subscribed
 					log.Printf(h.name+": discovered %s", propertyTopic)
 					h.subscribeToProperty(topic)
@@ -105,18 +105,20 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	wg.Wait()
 
 	// remove obsolete properties
-	newProps := NewPropertySet()
+	newProps := data.NewSet()
 	for _, property := range properties {
-		newProps.Add(fmt.Sprintf("%s/%s", topic, property))
+		newProps.Add(fmt.Sprintf("%s/%s", topic, property), true)
 	}
 
-	nodeProps := h.props.Match(topic + "/")
-	for _, old := range nodeProps {
-		if !newProps.Contains(old) {
-			if h.props.Remove(old) {
-				log.Printf(h.name+": removed %s", old)
+	oldProps := h.props.Filter(func(key string, val interface{}) bool {
+		return strings.HasPrefix(key, topic+"/")
+	})
+	for _, key := range oldProps.Keys() {
+		if !newProps.Contains(key) {
+			if h.props.Remove(key) {
+				log.Printf(h.name+": removed %s", key)
 			}
-			h.MqttClient.Unsubscribe(old)
+			h.MqttClient.Unsubscribe(key)
 		}
 	}
 }
