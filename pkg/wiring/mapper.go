@@ -3,7 +3,6 @@ package wiring
 import (
 	"log"
 	"strings"
-	"sync/atomic"
 
 	"github.com/andig/ingress/pkg/data"
 )
@@ -12,7 +11,6 @@ import (
 type Mapper struct {
 	wiring     *Wiring
 	connectors *Connectors
-	inflight   int64 // number of inflight requests
 }
 
 // NewMapper creates a data mapper that is able to Process() input messages
@@ -39,9 +37,6 @@ func (m *Mapper) Process(source string, d data.Data) {
 
 // async function for publishing
 func (m *Mapper) mapAndPublish(wire *Wire, d data.Data) {
-	atomic.AddInt64(&m.inflight, 1)
-	defer atomic.AddInt64(&m.inflight, -1)
-
 	if len(wire.Mappings) > 0 {
 		dataName := strings.ToLower(d.Name)
 		for _, mapping := range wire.Mappings {
@@ -62,7 +57,7 @@ MAPPED:
 
 	target, err := m.connectors.TargetForName(wire.Target)
 	if err != nil {
-		log.Println("mapper: invalid target " + wire.Target)
+		log.Fatal("mapper: invalid target " + wire.Target)
 		return
 	}
 

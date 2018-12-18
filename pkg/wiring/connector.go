@@ -46,7 +46,7 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 
 func (c *Connectors) createSourceConnector(conf config.Source) {
 	if conf.Name == "" {
-		log.Fatal("connectors: configuration error - missing source name")
+		log.Fatal("configuration error: missing source name")
 	}
 
 	var conn api.Source
@@ -68,14 +68,14 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 	defer c.mux.Unlock()
 
 	if _, err := c.SourceForName(conf.Name); err == nil {
-		log.Fatal("connectors: configuration error - cannot redefine source "+ conf.Name)
+		log.Fatal("configuration error: cannot redefine source "+ conf.Name)
 	}
 	c.sources[conf.Name] = conn
 }
 
 func (c *Connectors) createTargetConnector(conf config.Target) {
 	if conf.Name == "" {
-		log.Fatal("connectors: configuration error - missing target name")
+		log.Fatal("configuration error: missing target name")
 	}
 
 	var conn api.Target
@@ -97,7 +97,7 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 	defer c.mux.Unlock()
 
 	if _, err := c.TargetForName(conf.Name); err == nil {
-		log.Fatal("connectors: configuration error - cannot redefine target "+ conf.Name)
+		log.Fatal("configuration error: cannot redefine target "+ conf.Name)
 	}
 	c.targets[conf.Name] = conn
 }
@@ -135,7 +135,7 @@ func (c *Connectors) ApplyTelemetry() {
 func (c *Connectors) SourceForName(name string) (api.Source, error) {
 	source, ok := c.sources[name]
 	if !ok {
-		return nil, errors.New("Undefined source "+name)
+		return nil, errors.New("configuration error: undefined source "+name)
 	}
 	return source, nil
 }
@@ -144,7 +144,7 @@ func (c *Connectors) SourceForName(name string) (api.Source, error) {
 func (c *Connectors) TargetForName(name string) (api.Target, error) {
 	target, ok := c.targets[name]
 	if !ok {
-		return nil, errors.New("Undefined target "+name)
+		return nil, errors.New("configuration error: undefined target "+name)
 	}
 	return target, nil
 }

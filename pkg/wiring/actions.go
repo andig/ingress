@@ -27,7 +27,7 @@ func NewActions(actions []config.Action) *Actions {
 		}
 
 		if _, ok := actionsMap[action.Name]; ok {
-			log.Fatal("actions: configuration error - cannot redefine action " + action.Name)
+			log.Fatal("configuration error: cannot redefine action " + action.Name)
 		}
 
 		actionsMap[action.Name] = a
