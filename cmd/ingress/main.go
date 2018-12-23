@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -56,13 +55,15 @@ func checkVersion() {
 }
 
 func setLogLevel(level string) {
-	switch strings.ToLower(level) {
-	case "error": logrus.SetLevel(logrus.ErrorLevel)
-	case "info": logrus.SetLevel(logrus.InfoLevel)
-	case "debug": logrus.SetLevel(logrus.DebugLevel)
-	case "trace": logrus.SetLevel(logrus.TraceLevel)
-	default: logrus.SetLevel(logrus.DebugLevel)
+	lvl, err := logrus.ParseLevel(level)
+	if err != nil {
+		logrus.Fatal("invalid log level "+level)
 	}
+	logrus.SetLevel(lvl)
+
+	log = logrus.WithFields(logrus.Fields{
+		"module": "main",
+	})
 }
 
 func waitForCtrlC() {

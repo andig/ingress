@@ -15,8 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Entry
-
 // Subscriber Homie/MQTT data source
 type Subscriber struct {
 	*mq.MqttConnector
@@ -30,9 +28,7 @@ type Subscriber struct {
 
 // NewFromSourceConfig creates Homie/MQTT data source
 func NewFromSourceConfig(c config.Source) api.Source {
-	log	= logrus.WithFields(logrus.Fields{
-		"module": "homie",
-	})
+	InitLog()
 
 	topic := c.Topic
 	if topic == "" {
@@ -64,11 +60,11 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	log.Println("connected to " + mq.ServerFromClient(client))
+	Log.Println("connected to " + mq.ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	log.Println("disconnected from " + mq.ServerFromClient(client))
+	Log.Println("disconnected from " + mq.ServerFromClient(client))
 }
 
 // Run implements api.Source
@@ -99,7 +95,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 			if h.validateProperty(propertyTopic) {
 				if h.props.Add(propertyTopic) {
 					// print only if not already subscribed
-					log.Printf("discovered %s", propertyTopic)
+					Log.Printf("discovered %s", propertyTopic)
 					h.subscribeToProperty(propertyTopic)
 				}
 			}
@@ -120,7 +116,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	for _, old := range nodeProps {
 		if !newProps.Contains(old) {
 			if h.props.Remove(old) {
-				log.Printf("removed %s", old)
+				Log.Printf("removed %s", old)
 			}
 			h.MqttClient.Unsubscribe(old)
 		}
@@ -158,20 +154,20 @@ func (h *Subscriber) validateProperty(topic string) bool {
 
 func (h *Subscriber) subscribeToProperty(topic string) {
 	h.MqttClient.Subscribe(topic, h.qos, func(c mqtt.Client, msg mqtt.Message) {
-		// log.Debugf("recv (%s=%s)", msg.Topic(), msg.Payload())
+		// Log.Debugf("recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		segments := strings.Split(msg.Topic(), "/")
 		name := segments[len(segments)-1]
 		payload := string(msg.Payload())
 
-		log.WithFields(logrus.Fields{
+		Log.WithFields(logrus.Fields{
 			"event": name,
 			"value": payload,
 		}).Debugf("recv %s", msg.Topic())
 
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
-			log.WithFields(logrus.Fields{
+			Log.WithFields(logrus.Fields{
 				"event": name,
 				"value": payload,
 			}).Error("float conversion error, skipping")
