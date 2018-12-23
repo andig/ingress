@@ -94,7 +94,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 				if h.props.Add(propertyTopic) {
 					// print only if not already subscribed
 					log.Printf(h.name+": discovered %s", propertyTopic)
-					h.subscribeToProperty(topic)
+					h.subscribeToProperty(propertyTopic)
 				}
 			}
 			wg.Done()
