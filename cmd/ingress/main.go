@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,8 +15,11 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/tcnksm/go-latest"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 )
+
+var log *logrus.Entry
 
 func inject() {
 	mqttOptions := NewMqttClientOptions("tcp://localhost:1883", "", "")
@@ -52,6 +55,16 @@ func checkVersion() {
 	}
 }
 
+func setLogLevel(level string) {
+	switch strings.ToLower(level) {
+	case "error": logrus.SetLevel(logrus.ErrorLevel)
+	case "info": logrus.SetLevel(logrus.InfoLevel)
+	case "debug": logrus.SetLevel(logrus.DebugLevel)
+	case "trace": logrus.SetLevel(logrus.TraceLevel)
+	default: logrus.SetLevel(logrus.DebugLevel)
+	}
+}
+
 func waitForCtrlC() {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -83,6 +96,11 @@ func main() {
 			Name:  "diagnose",
 			Usage: "Memory diagnostics",
 		},
+		cli.StringFlag{
+			Name:  "log",
+			Value: "debug",
+			Usage: "Log level (error, info, debug, trace)",
+		},
 		cli.BoolFlag{
 			Name:  "test, t",
 			Usage: "Inject test data",
@@ -100,6 +118,8 @@ func main() {
 		if c.Bool("dump") {
 			conf.Dump()
 		}
+
+		setLogLevel(c.String("log"))
 
 		go checkVersion()
 

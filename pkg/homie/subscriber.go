@@ -2,7 +2,6 @@ package homie
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,7 +12,10 @@ import (
 	"github.com/andig/ingress/pkg/data"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/sirupsen/logrus"
 )
+
+var log *logrus.Entry
 
 // Subscriber Homie/MQTT data source
 type Subscriber struct {
@@ -28,6 +30,10 @@ type Subscriber struct {
 
 // NewFromSourceConfig creates Homie/MQTT data source
 func NewFromSourceConfig(c config.Source) api.Source {
+	log	= logrus.WithFields(logrus.Fields{
+		"module": "homie",
+	})
+
 	topic := c.Topic
 	if topic == "" {
 		topic = "homie"
@@ -58,11 +64,11 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	log.Println(h.name + ": connected to " + mq.ServerFromClient(client))
+	log.Println("connected to " + mq.ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	log.Println(h.name + ": disconnected from " + mq.ServerFromClient(client))
+	log.Println("disconnected from " + mq.ServerFromClient(client))
 }
 
 // Run implements api.Source
@@ -93,7 +99,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 			if h.validateProperty(propertyTopic) {
 				if h.props.Add(propertyTopic) {
 					// print only if not already subscribed
-					log.Printf(h.name+": discovered %s", propertyTopic)
+					log.Printf("discovered %s", propertyTopic)
 					h.subscribeToProperty(propertyTopic)
 				}
 			}
@@ -114,7 +120,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	for _, old := range nodeProps {
 		if !newProps.Contains(old) {
 			if h.props.Remove(old) {
-				log.Printf(h.name+": removed %s", old)
+				log.Printf("removed %s", old)
 			}
 			h.MqttClient.Unsubscribe(old)
 		}
@@ -152,15 +158,23 @@ func (h *Subscriber) validateProperty(topic string) bool {
 
 func (h *Subscriber) subscribeToProperty(topic string) {
 	h.MqttClient.Subscribe(topic, h.qos, func(c mqtt.Client, msg mqtt.Message) {
-		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
+		// log.Debugf("recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		segments := strings.Split(msg.Topic(), "/")
 		name := segments[len(segments)-1]
-
 		payload := string(msg.Payload())
+
+		log.WithFields(logrus.Fields{
+			"event": name,
+			"value": payload,
+		}).Debugf("recv %s", msg.Topic())
+
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
-			log.Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
+			log.WithFields(logrus.Fields{
+				"event": name,
+				"value": payload,
+			}).Error("float conversion error, skipping")
 			return
 		}
 
