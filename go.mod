@@ -2,6 +2,7 @@ module github.com/andig/ingress
 
 require (
 	github.com/aprice/embed v0.0.0-20181126214606-b9ceb1f6d22d
+	github.com/birkirb/loggers-mapper-logrus v0.0.0-20180326232643-461f2d8e6f72
 	github.com/eapache/queue v1.1.0
 	github.com/eclipse/paho.mqtt.golang v1.1.2-0.20181129145454-379fd9f99ba5
 	github.com/google/go-github v17.0.0+incompatible // indirect
@@ -12,6 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.2.0
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc // indirect
+	gopkg.in/birkirb/loggers.v1 v1.1.0
 	gopkg.in/urfave/cli.v1 v1.20.0
 	gopkg.in/yaml.v2 v2.2.2
 )

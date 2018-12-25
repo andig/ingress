@@ -1,5 +1,7 @@
 github.com/aprice/embed v0.0.0-20181126214606-b9ceb1f6d22d h1:8DbznMbFh21pRZDARpIJZfMkP8yq9RhmTOsKtGEJRwc=
 github.com/aprice/embed v0.0.0-20181126214606-b9ceb1f6d22d/go.mod h1:z7Oa/gJJkV6/+xqwMFqFU3F+sJ6tX7tMHEV12dyep0s=
+github.com/birkirb/loggers-mapper-logrus v0.0.0-20180326232643-461f2d8e6f72 h1:P06eEm4EOIx6W81NgBAxYzhtA4F3O00gtcqHIROMVBE=
+github.com/birkirb/loggers-mapper-logrus v0.0.0-20180326232643-461f2d8e6f72/go.mod h1:g/bxAymxtTXleU0tnlQBv0vG4LNsumFHvdx6FZANooM=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/eapache/queue v1.1.0 h1:YOEu7KNc61ntiQlcEeUIoDTJ2o8mQznoNvUhiigpIqc=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
@@ -33,6 +35,8 @@ golang.org/x/net v0.0.0-20181201002055-351d144fa1fc h1:a3CU5tJYVj92DY2LaA1kUkrsq
 golang.org/x/net v0.0.0-20181201002055-351d144fa1fc/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33 h1:I6FyU15t786LL7oL/hn43zqTuEGr4PN7F4XJ1p4E3Y8=
 golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+gopkg.in/birkirb/loggers.v1 v1.1.0 h1:7dt/2mwY1bo1IZH1XX3JLx7bCeLf9MHu1lpCt/ZyEJs=
+gopkg.in/birkirb/loggers.v1 v1.1.0/go.mod h1:+rK5V8ydMXWC2ZPqEsh1ponO3uTR5JutiapgW36u8wI=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/urfave/cli.v1 v1.20.0 h1:NdAVW6RYxDif9DhDHaAortIu956m2c0v+09AZBPTbE0=

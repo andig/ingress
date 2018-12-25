@@ -9,28 +9,27 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/mqtt"
+	"github.com/andig/ingress/pkg/log"
+	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/tcnksm/go-latest"
-	"github.com/sirupsen/logrus"
+	"gopkg.in/birkirb/loggers.v1"
 	"gopkg.in/urfave/cli.v1"
 )
 
-var log *logrus.Entry
-
 func inject() {
-	mqttOptions := NewMqttClientOptions("tcp://localhost:1883", "", "")
+	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
 	mqttClient := mqtt.NewClient(mqttOptions)
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("mqtt: error connecting: %s", token.Error())
+		Log().Fatalf("mqtt: error connecting: %s", token.Error())
 	}
 
 	time.Sleep(200 * time.Millisecond)
 	token := mqttClient.Publish("input/inject", 0, false, "3.14")
 	if token.WaitTimeout(100 * time.Millisecond) {
-		log.Println("--> inject done")
+		Log().Println("--> inject done")
 	}
 
 	mqttClient.Publish("homie/meter1/$nodes", 1, true, "zaehlwerk1")
@@ -47,23 +46,24 @@ func checkVersion() {
 		Repository: "ingress",
 	}
 
+	Log().Printf("ingress v%s %s", tag, hash)
 	if res, err := latest.Check(githubTag, tag); err == nil {
 		if res.Outdated {
-			log.Printf("updates available - please upgrade to ingress %s", res.Current)
+			Log().Warnf("updates available - please upgrade to ingress %s", res.Current)
 		}
 	}
 }
 
-func setLogLevel(level string) {
-	lvl, err := logrus.ParseLevel(level)
-	if err != nil {
-		logrus.Fatal("invalid log level "+level)
-	}
-	logrus.SetLevel(lvl)
+var logger loggers.Contextual
 
-	log = logrus.WithFields(logrus.Fields{
-		"module": "main",
-	})
+func configureLogging(level string) {
+	log.InitLoggers(level)
+	logger = log.NewLogger(level)
+}
+
+// Log returns a contextual logger
+func Log(fields ...interface{}) loggers.Advanced {
+	return log.WithContext(logger, fields...)
 }
 
 func waitForCtrlC() {
@@ -98,7 +98,7 @@ func main() {
 			Usage: "Memory diagnostics",
 		},
 		cli.StringFlag{
-			Name:  "log",
+			Name:  "log, l",
 			Value: "debug",
 			Usage: "Log level (error, info, debug, trace)",
 		},
@@ -110,7 +110,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		if c.NArg() > 0 {
-			log.Fatalf("Unexpected arguments: %v", c.Args())
+			Log().Fatalf("Unexpected arguments: %v", c.Args())
 		}
 
 		var conf config.Config
@@ -120,14 +120,14 @@ func main() {
 			conf.Dump()
 		}
 
-		setLogLevel(c.String("log"))
+		configureLogging(c.String("log"))
 
 		go checkVersion()
 
 		connectors := wiring.NewConnectors(conf.Sources, conf.Targets)
-		actions := wiring.NewActions(conf.Actions)
 		mappings := wiring.NewMappings(conf.Mappings, connectors)
-		wires := wiring.NewWiring(conf.Wires, mappings, connectors)
+		actions := wiring.NewActions(conf.Actions)
+		wires := wiring.NewWiring(conf.Wires, connectors, mappings, actions)
 		mapper := wiring.NewMapper(wires, connectors)
 		_ = actions
 		_ = mapper

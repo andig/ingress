@@ -1,7 +1,6 @@
 package wiring
 
 import (
-	"log"
 	"strings"
 
 	"github.com/andig/ingress/pkg/data"
@@ -28,7 +27,11 @@ func (m *Mapper) Process(source string, d data.Data) {
 	d.Normalize() // normalize data before sending to any target
 
 	for _, wire := range m.wiring.WiresForSource(source) {
-		log.Printf("mapper: routing %s -> %s ", wire.Source, wire.Target)
+		Log(
+			"event", d.Name,
+			"source", wire.Source,
+			"target", wire.Target,
+		).Debug("routing")
 
 		// map and publish async
 		go m.mapAndPublish(&wire, d)
@@ -39,10 +42,13 @@ func (m *Mapper) Process(source string, d data.Data) {
 func (m *Mapper) mapAndPublish(wire *Wire, d data.Data) {
 	if len(wire.Mappings) > 0 {
 		dataName := strings.ToLower(d.Name)
-		for _, mapping := range wire.Mappings {
+		for mappingName, mapping := range wire.Mappings {
 			for _, entry := range mapping {
 				if dataName == strings.ToLower(entry.From) {
-					log.Printf("mapper: mapping %s -> %s ", d.Name, entry.To)
+					Log(
+						"event", d.Name,
+						"mapping", mappingName,
+					).Debugf("mapping %s -> %s ", d.Name, entry.To)
 					d.Name = entry.To
 					goto MAPPED
 				}
@@ -50,14 +56,14 @@ func (m *Mapper) mapAndPublish(wire *Wire, d data.Data) {
 		}
 
 		// not mapped
-		log.Println("mapper: no mapping - dropping " + d.Name)
+		Log("event", d.Name).Debugf("no mapping - dropped")
 		return
 	}
 MAPPED:
 
 	target, err := m.connectors.TargetForName(wire.Target)
 	if err != nil {
-		log.Fatal("mapper: invalid target " + wire.Target)
+		Log().Fatal("invalid target " + wire.Target)
 		return
 	}
 

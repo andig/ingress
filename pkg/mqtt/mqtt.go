@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"log"
 	"time"
 
 	"github.com/eclipse/paho.mqtt.golang"
@@ -45,7 +44,7 @@ func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
 
 	// connect
 	if token := m.MqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal("mqtt: error connecting: ", token.Error())
+		Log().Fatal("mqtt: error connecting: ", token.Error())
 	}
 }
 
@@ -55,9 +54,9 @@ func (m *MqttConnector) WaitForToken(token mqtt.Token, timeout time.Duration) bo
 		if token.Error() == nil {
 			return true
 		}
-		log.Printf("mqtt: error: %s", token.Error())
+		Log().Printf("mqtt: error: %s", token.Error())
 	} else {
-		log.Printf("mqtt: timeout")
+		Log().Printf("mqtt: timeout")
 	}
 	return false
 }

@@ -25,8 +25,6 @@ type Connectors struct {
 
 // NewConnectors creates the source and output system connectors
 func NewConnectors(i []config.Source, o []config.Target) *Connectors {
-	InitLog()
-
 	c := Connectors{
 		sources: make(map[string]api.Source),
 		targets: make(map[string]api.Target),
@@ -47,7 +45,7 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 
 func (c *Connectors) createSourceConnector(conf config.Source) {
 	if conf.Name == "" {
-		Log.Fatal("configuration error: missing source name")
+		Log().Fatal("configuration error: missing source name")
 	}
 
 	var conn api.Source
@@ -62,21 +60,21 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		conn = homie.NewFromSourceConfig(conf)
 		break
 	default:
-		Log.Fatal("invalid source type: " + conf.Type)
+		Log().Fatal("invalid source type: " + conf.Type)
 	}
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
 	if _, err := c.SourceForName(conf.Name); err == nil {
-		Log.Fatal("configuration error: cannot redefine source "+ conf.Name)
+		Log().Fatal("configuration error: cannot redefine source "+ conf.Name)
 	}
 	c.sources[conf.Name] = conn
 }
 
 func (c *Connectors) createTargetConnector(conf config.Target) {
 	if conf.Name == "" {
-		Log.Fatal("configuration error: missing target name")
+		Log().Fatal("configuration error: missing target name")
 	}
 
 	var conn api.Target
@@ -91,14 +89,14 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		conn = volkszaehler.NewFromTargetConfig(conf)
 		break
 	default:
-		Log.Fatal("Invalid output type: " + conf.Type)
+		Log().Fatal("Invalid output type: " + conf.Type)
 	}
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
 	if _, err := c.TargetForName(conf.Name); err == nil {
-		Log.Fatal("configuration error: cannot redefine target "+ conf.Name)
+		Log().Fatal("configuration error: cannot redefine target "+ conf.Name)
 	}
 	c.targets[conf.Name] = conn
 }
@@ -125,8 +123,8 @@ func (c *Connectors) ApplyTelemetry() {
 				}
 			}
 
-			// Log.Println("connector: activated metrics collection")
-			Log.Println("enabled metrics collection")
+			// Log().Println("activated metrics collection")
+			Log().Println("enabled metrics collection")
 			return
 		}
 	}
@@ -153,14 +151,17 @@ func (c *Connectors) TargetForName(name string) (api.Target, error) {
 // Run starts each Source's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
 	for name, source := range c.sources {
-		Log.Printf("connector: starting %s", name)
+		Log().Printf("starting %s", name)
 		c := make(chan data.Data)
 
 		// start distributor
 		go func(name string, c chan data.Data) {
 			for {
 				d := <-c
-				Log.Printf("connector: recv from %s (%s=%f)", name, d.Name, d.Value)
+				Log(
+					"source", name,
+					"event", d.Name,
+				).Debugf("processing")
 				go mapper.Process(name, d)
 			}
 		}(name, c)

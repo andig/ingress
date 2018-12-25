@@ -1,6 +1,7 @@
 package wiring
 
 import (
+	"errors"
 	"log"
 	"strings"
 
@@ -37,6 +38,14 @@ func NewActions(actions []config.Action) *Actions {
 		actions: actionsMap,
 	}
 	return a
+}
+
+func (a *Actions) ActionForName(name string) (api.Action, error) {
+	action, ok := a.actions[name]
+	if !ok {
+		return nil, errors.New("configuration error: undefined action " + name)
+	}
+	return action, nil
 }
 
 type AggregateAction struct {
