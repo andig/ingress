@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -10,7 +9,8 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/mqtt"
+	. "github.com/andig/ingress/pkg/log"
+	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -19,16 +19,16 @@ import (
 )
 
 func inject() {
-	mqttOptions := NewMqttClientOptions("tcp://localhost:1883", "", "")
+	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
 	mqttClient := mqtt.NewClient(mqttOptions)
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("mqtt: error connecting: %s", token.Error())
+		Log().Fatalf("mqtt: error connecting: %s", token.Error())
 	}
 
 	time.Sleep(200 * time.Millisecond)
 	token := mqttClient.Publish("input/inject", 0, false, "3.14")
 	if token.WaitTimeout(100 * time.Millisecond) {
-		log.Println("--> inject done")
+		Log().Println("--> inject done")
 	}
 
 	mqttClient.Publish("homie/meter1/$nodes", 1, true, "zaehlwerk1")
@@ -45,9 +45,10 @@ func checkVersion() {
 		Repository: "ingress",
 	}
 
+	Log().Printf("ingress v%s %s", tag, hash)
 	if res, err := latest.Check(githubTag, tag); err == nil {
 		if res.Outdated {
-			log.Printf("updates available - please upgrade to ingress %s", res.Current)
+			Log().Warnf("updates available - please upgrade to ingress %s", res.Current)
 		}
 	}
 }
@@ -83,6 +84,11 @@ func main() {
 			Name:  "diagnose",
 			Usage: "Memory diagnostics",
 		},
+		cli.StringFlag{
+			Name:  "log, l",
+			Value: "debug",
+			Usage: "Log level (error, info, debug, trace)",
+		},
 		cli.BoolFlag{
 			Name:  "test, t",
 			Usage: "Inject test data",
@@ -90,8 +96,9 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) {
+		Configure(c.String("log"))
 		if c.NArg() > 0 {
-			log.Fatalf("Unexpected arguments: %v", c.Args())
+			Log().Fatalf("Unexpected arguments: %v", c.Args())
 		}
 
 		var conf config.Config
@@ -104,9 +111,9 @@ func main() {
 		go checkVersion()
 
 		connectors := wiring.NewConnectors(conf.Sources, conf.Targets)
-		actions := wiring.NewActions(conf.Actions)
 		mappings := wiring.NewMappings(conf.Mappings, connectors)
-		wires := wiring.NewWiring(conf.Wires, mappings, connectors)
+		actions := wiring.NewActions(conf.Actions)
+		wires := wiring.NewWiring(conf.Wires, connectors, mappings, actions)
 		mapper := wiring.NewMapper(wires, connectors)
 		_ = actions
 		_ = mapper

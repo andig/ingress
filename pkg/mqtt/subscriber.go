@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"log"
 	"regexp"
 	"strconv"
 	"sync"
@@ -9,6 +8,7 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/log"
 
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -54,29 +54,29 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	log.Println(h.name + ": connected to " + ServerFromClient(client))
+	Log(log.SRC, h.name).Println("connected to " + ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	log.Println(h.name + ": disconnected from " + ServerFromClient(client))
+	Log(log.SRC, h.name).Warnf("disconnected from " + ServerFromClient(client))
 }
 
 // Run implements api.Source
 func (h *Subscriber) Run(out chan data.Data) {
-	log.Printf(h.name+": subscribed to topic %s", h.rootTopic)
+	Log(log.SRC, h.name).Printf(h.name+": subscribed to topic %s", h.rootTopic)
 
 	h.MqttClient.Subscribe(h.rootTopic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		log.Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
+		Log(log.SRC, h.name).Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		payload := string(msg.Payload())
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
-			log.Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
+			Log(log.SRC, h.name).Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
 			return
 		}
 
 		name := h.matchString(msg.Topic(), topicPattern)
-		log.Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
+		Log(log.SRC, h.name).Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
 
 		data := data.Data{
 			Timestamp: data.Timestamp(),
@@ -91,7 +91,7 @@ func (h *Subscriber) Run(out chan data.Data) {
 func (h *Subscriber) matchString(s string, pattern string) string {
 	re, err := regexp.Compile(topicPattern)
 	if err != nil {
-		log.Fatal(h.name + ": invalid regex pattern " + pattern)
+		Log(log.SRC, h.name).Fatal("invalid regex pattern " + pattern)
 	}
 
 	matches := re.FindStringSubmatch(s)

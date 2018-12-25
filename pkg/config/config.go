@@ -3,7 +3,8 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+
+	. "github.com/andig/ingress/pkg/log"
 
 	"gopkg.in/yaml.v2"
 )
@@ -69,12 +70,12 @@ type Config struct {
 func (c *Config) Load(file string) *Config {
 	yamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		log.Fatalf("config: cannot read config file %s (%v)", file, err)
+		Log().Fatalf("cannot read config file %s (%v)", file, err)
 	}
 
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
-		log.Fatalf("config: cannot parse config file (%v)", err)
+		Log().Fatalf("cannot parse config file (%v)", err)
 	}
 
 	return c
@@ -87,7 +88,7 @@ func (c *Config) Dump() {
 
 	d, err := yaml.Marshal(c)
 	if err != nil {
-		log.Fatalf("config: error (%v)", err)
+		Log().Fatalf("error (%v)", err)
 	}
 	fmt.Println(string(d))
 }

@@ -2,13 +2,13 @@ package http
 
 import (
 	"bytes"
-	"log"
 	transport "net/http"
 	"strings"
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Publisher is the HTTP data target
@@ -28,13 +28,13 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		method = "GET"
 	}
 	if method != "GET" && method != "POST" {
-		log.Fatal(c.Name + ": invalid method " + c.Method)
+		Log(log.TGT, c.Name).Fatal("invalid method " + c.Method)
 	}
 	if method == "POST" && c.Payload == "" {
-		log.Fatal(c.Name + ": missing payload configuration for POST method")
+		Log(log.TGT, c.Name).Fatal("missing payload configuration for POST method")
 	}
 	if method == "GET" && c.Payload != "" {
-		log.Fatal(c.Name + ": invalid payload configuration for GET method")
+		Log(log.TGT, c.Name).Fatal("invalid payload configuration for GET method")
 	}
 
 	h := &Publisher{
@@ -55,7 +55,7 @@ func (h *Publisher) Discover() {
 // Publish implements api.Source
 func (h *Publisher) Publish(d data.Data) {
 	url := d.MatchPattern(h.url)
-	log.Printf(h.name+": send %s %s", h.method, url)
+	Log(log.TGT, h.name).Debugf("send %s %s", h.method, url)
 
 	var resp *transport.Response
 	var req *transport.Request
@@ -70,7 +70,7 @@ func (h *Publisher) Publish(d data.Data) {
 	}
 
 	if err != nil {
-		log.Printf(h.name+": create request failed %s", err)
+		Log(log.TGT, h.name).Warnf("create request failed %s", err)
 		return
 	}
 
@@ -82,11 +82,11 @@ func (h *Publisher) Publish(d data.Data) {
 	// execute request
 	resp, err = h.client.Do(req)
 	if err != nil {
-		log.Printf(h.name+": send failed (%s)", err)
+		Log(log.TGT, h.name).Warnf("send failed (%s)", err)
 		return
 	}
 
 	if resp.StatusCode >= 300 {
-		log.Printf(h.name+": send failed %s %d %s", h.method, resp.StatusCode, url)
+		Log(log.TGT, h.name).Warnf("send failed %s %d %s", h.method, resp.StatusCode, url)
 	}
 }
