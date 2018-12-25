@@ -8,6 +8,7 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/log"
 
 	"github.com/andig/ingress/pkg/http"
 	"github.com/andig/ingress/pkg/homie"
@@ -159,8 +160,8 @@ func (c *Connectors) Run(mapper *Mapper) {
 			for {
 				d := <-c
 				Log(
-					"source", name,
-					"event", d.Name,
+					log.SRC, name,
+					log.EV, d.Name,
 				).Debugf("processing")
 				go mapper.Process(name, d)
 			}

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Mapper handles data transfer over wires
@@ -28,9 +29,9 @@ func (m *Mapper) Process(source string, d data.Data) {
 
 	for _, wire := range m.wiring.WiresForSource(source) {
 		Log(
-			"event", d.Name,
-			"source", wire.Source,
-			"target", wire.Target,
+			log.EV, d.Name,
+			log.SRC, wire.Source,
+			log.TGT, wire.Target,
 		).Debug("routing")
 
 		// map and publish async
@@ -46,7 +47,7 @@ func (m *Mapper) mapAndPublish(wire *Wire, d data.Data) {
 			for _, entry := range mapping {
 				if dataName == strings.ToLower(entry.From) {
 					Log(
-						"event", d.Name,
+						log.EV, d.Name,
 						"mapping", mappingName,
 					).Debugf("mapping %s -> %s ", d.Name, entry.To)
 					d.Name = entry.To
@@ -56,7 +57,7 @@ func (m *Mapper) mapAndPublish(wire *Wire, d data.Data) {
 		}
 
 		// not mapped
-		Log("event", d.Name).Debugf("no mapping - dropped")
+		Log(log.EV, d.Name).Debugf("no mapping - dropped")
 		return
 	}
 MAPPED:

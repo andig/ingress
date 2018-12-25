@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/log"
+	. "github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/tcnksm/go-latest"
-	"gopkg.in/birkirb/loggers.v1"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -52,18 +51,6 @@ func checkVersion() {
 			Log().Warnf("updates available - please upgrade to ingress %s", res.Current)
 		}
 	}
-}
-
-var logger loggers.Contextual
-
-func configureLogging(level string) {
-	log.InitLoggers(level)
-	logger = log.NewLogger(level)
-}
-
-// Log returns a contextual logger
-func Log(fields ...interface{}) loggers.Advanced {
-	return log.WithContext(logger, fields...)
 }
 
 func waitForCtrlC() {
@@ -109,6 +96,7 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) {
+		Configure(c.String("log"))
 		if c.NArg() > 0 {
 			Log().Fatalf("Unexpected arguments: %v", c.Args())
 		}
@@ -119,8 +107,6 @@ func main() {
 		if c.Bool("dump") {
 			conf.Dump()
 		}
-
-		configureLogging(c.String("log"))
 
 		go checkVersion()
 

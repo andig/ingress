@@ -10,6 +10,7 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
+	"github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -57,11 +58,11 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	Log("source", h.name).Println("connected to " + mq.ServerFromClient(client))
+	Log(log.SRC, h.name).Println("connected to " + mq.ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	Log("source", h.name).Warnf("disconnected from " + mq.ServerFromClient(client))
+	Log(log.SRC, h.name).Warnf("disconnected from " + mq.ServerFromClient(client))
 }
 
 // Run implements api.Source
@@ -93,8 +94,8 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 				if h.props.Add(propertyTopic) {
 					// print only if not already subscribed
 					Log(
-						"source", h.name,
-						"event", property,
+						log.SRC, h.name,
+						log.EV, property,
 					).Printf("discovered %s", propertyTopic)
 					h.subscribeToProperty(propertyTopic)
 				}
@@ -116,7 +117,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	for _, old := range nodeProps {
 		if !newProps.Contains(old) {
 			if h.props.Remove(old) {
-				Log("source", h.name).Debugf("removed %s", old)
+				Log(log.SRC, h.name).Debugf("removed %s", old)
 			}
 			h.MqttClient.Unsubscribe(old)
 		}
@@ -159,17 +160,17 @@ func (h *Subscriber) subscribeToProperty(topic string) {
 		payload := string(msg.Payload())
 
 		Log(
-			"source", h.name,
-			"event", name,
-			"value", payload,
+			log.SRC, h.name,
+			log.EV, name,
+			log.VAL, payload,
 		).Debugf("recv %s", msg.Topic())
 
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
 			Log(
-				"source", h.name,
-				"event", name,
-				"value", payload,
+				log.SRC, h.name,
+				log.EV, name,
+				log.VAL, payload,
 			).Error("float conversion error, skipping")
 			return
 		}
