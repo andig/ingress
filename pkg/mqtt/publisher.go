@@ -3,8 +3,7 @@ package mqtt
 import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/data"
-	"github.com/andig/ingress/pkg/log"
+	. "github.com/andig/ingress/pkg/log"
 
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -46,21 +45,21 @@ func NewPublisher(name string, topic string, mqttOptions *mqtt.ClientOptions) *P
 }
 
 func (h *Publisher) connectionHandler(client mqtt.Client) {
-	Log(log.TGT, h.name).Println("connected to " + ServerFromClient(client))
+	Log(TGT, h.name).Println("connected to " + ServerFromClient(client))
 }
 
 func (h *Publisher) connectionLostHandler(client mqtt.Client, err error) {
-	Log(log.TGT, h.name).Warnf("disconnected from " + ServerFromClient(client))
+	Log(TGT, h.name).Warnf("disconnected from " + ServerFromClient(client))
 }
 
 // Publish implements api.Source
-func (h *Publisher) Publish(d data.Data) {
+func (h *Publisher) Publish(d api.Data) {
 	topic := d.MatchPattern(h.topic)
 	message := d.ValStr()
 	Log(
-		log.TGT, h.name,
-		log.EV, topic,
-		log.VAL, message,
+		TGT, h.name,
+		EV, topic,
+		VAL, message,
 	).Debugf("send")
 
 	token := h.MqttClient.Publish(topic, 1, false, message)

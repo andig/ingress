@@ -3,6 +3,7 @@ package wiring
 import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
+	. "github.com/andig/ingress/pkg/log"
 )
 
 // Wire connects source and target with associated mapping
@@ -42,7 +43,10 @@ func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *A
 					wireMappings = append(wireMappings, wireMapping)
 				}
 
-				Log().Printf("wiring %s -> %s ", source, target)
+				Log(
+					SRC, source,
+					TGT, target,
+				).Printf("creating wire")
 
 				wire := Wire{
 					Source:   source,

@@ -5,11 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/data"
 )
 
 type MetricProvider interface {
-	GetMetrics() []data.Data
+	GetMetrics() []api.Data
 }
 
 type Telemetry struct {
@@ -40,7 +41,7 @@ func (h *Telemetry) AddProvider(provider MetricProvider) {
 	h.providers = append(h.providers, provider)
 }
 
-func (h *Telemetry) Run(out chan data.Data) {
+func (h *Telemetry) Run(out chan api.Data) {
 	for {
 		time.Sleep(time.Duration(1000 * time.Millisecond))
 
@@ -53,23 +54,13 @@ func (h *Telemetry) Run(out chan data.Data) {
 	}
 }
 
-func (h *Telemetry) GetMetrics() []data.Data {
+func (h *Telemetry) GetMetrics() []api.Data {
 	var memstats runtime.MemStats
 
-	ts := data.Timestamp()
 	runtime.ReadMemStats(&memstats)
-
-	data := []data.Data{
-		data.Data{
-			Timestamp: ts,
-			Name:      "NumGoroutine",
-			Value:     float64(runtime.NumGoroutine()),
-		},
-		data.Data{
-			Timestamp: ts,
-			Name:      "Alloc",
-			Value:     float64(memstats.Alloc),
-		},
+	data := []api.Data{
+		data.NewData("NumGoroutine", float64(runtime.NumGoroutine())),
+		data.NewData("Alloc", float64(memstats.Alloc)),
 	}
 
 	return data

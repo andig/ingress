@@ -3,16 +3,9 @@ package data
 import "testing"
 
 func TestMatchPattern(t *testing.T) {
-	d := &Data{
-		ID:        "ID",
-		Name:      "NAME",
-		Value:     1.234234,
-		Timestamp: 1,
-	}
+	d := NewData("NAME", 1.234234)
+	d.SetTimestamp(1)
 
-	if s := d.MatchPattern("%id%"); s != "ID" {
-		t.Errorf("id not replaced, got %s", s)
-	}
 	if s := d.MatchPattern("%name%"); s != "NAME" {
 		t.Errorf("name not replaced, got %s", s)
 	}

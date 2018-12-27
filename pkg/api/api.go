@@ -1,21 +1,36 @@
 package api
 
-import "github.com/andig/ingress/pkg/data"
+// Data is the event interface
+type Data interface {
+	GetEventID() int64
 
-// Source is the interface data sources must implement
+	GetName() string
+	SetName(name string)
+
+	GetValue() float64
+	SetValue(value float64)
+
+	GetTimestamp() int64
+	SetTimestamp(timestamp int64)
+
+	ValStr() string
+	Normalize()
+	MatchPattern(s string) string
+}
+
 type Source interface {
 	// NewFromSourceConfig(c config.Source)
-	Run(receiver chan data.Data)
+	Run(receiver chan Data)
 }
 
 // Target is the interface data targets must implement
 type Target interface {
 	// NewFromTargetConfig(c config.Target)
-	Publish(d data.Data)
+	Publish(d Data)
 }
 
 // Action is the interface data targets must implement
 type Action interface {
 	// NewFromActionConfig(c config.Action)
-	Process(d data.Data)
+	Process(d Data)
 }

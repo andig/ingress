@@ -7,7 +7,6 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/data"
 )
 
 type Actions struct {
@@ -52,6 +51,6 @@ type AggregateAction struct {
 	mode string
 }
 
-func (a *AggregateAction) Process(d data.Data) {
+func (a *AggregateAction) Process(d api.Data) {
 	log.Println("AggregateAction")
 }

@@ -5,12 +5,18 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/andig/ingress/pkg/api"
 )
 
+var mux sync.Mutex
+var eventID int64
 var patternRegex = regexp.MustCompile(`%\w+?%`)
 
 type Data struct {
+	EventID   int64
 	ID        string
 	Name      string
 	Timestamp int64
@@ -19,6 +25,51 @@ type Data struct {
 
 func Timestamp() int64 {
 	return int64(time.Now().UnixNano() / 1e6)
+}
+
+func GenerateEventID() int64 {
+	mux.Lock()
+	defer mux.Unlock()
+	eventID++
+	return eventID
+}
+
+// NewData creates data event with consecutive id and current timestamp
+func NewData(name string, value float64) api.Data {
+	return &Data{
+		EventID:   GenerateEventID(),
+		Timestamp: Timestamp(),
+		Name:      name,
+		Value:     value,
+	}
+}
+
+func (d *Data) GetEventID() int64 {
+	return d.EventID
+}
+
+func (d *Data) GetName() string {
+	return d.Name
+}
+
+func (d *Data) SetName(name string) {
+	d.Name = name
+}
+
+func (d *Data) GetValue() float64 {
+	return d.Value
+}
+
+func (d *Data) SetValue(value float64) {
+	d.Value = value
+}
+
+func (d *Data) GetTimestamp() int64 {
+	return d.Timestamp
+}
+
+func (d *Data) SetTimestamp(timestamp int64) {
+	d.Timestamp = timestamp
 }
 
 func (d *Data) Normalize() {
@@ -49,6 +100,8 @@ func (d *Data) MatchPattern(s string) string {
 			s = strings.Replace(s, match, d.ValStr(), -1)
 		case "%timestamp%":
 			s = strings.Replace(s, match, strconv.FormatInt(d.Timestamp, 10), -1)
+			// default:
+			// 	log.Log().Fatalf("Invalid match pattern %s", s)
 		}
 	}
 

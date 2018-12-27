@@ -10,8 +10,9 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
-	"github.com/andig/ingress/pkg/log"
+	. "github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
+
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -23,7 +24,7 @@ type Subscriber struct {
 	qos       byte
 	mux       sync.RWMutex
 	props     *PropertySet
-	receiver  chan data.Data
+	receiver  chan api.Data
 }
 
 // NewFromSourceConfig creates Homie/MQTT data source
@@ -58,15 +59,15 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	Log(log.SRC, h.name).Println("connected to " + mq.ServerFromClient(client))
+	Log(SRC, h.name).Println("connected to " + mq.ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	Log(log.SRC, h.name).Warnf("disconnected from " + mq.ServerFromClient(client))
+	Log(SRC, h.name).Warnf("disconnected from " + mq.ServerFromClient(client))
 }
 
 // Run implements api.Source
-func (h *Subscriber) Run(out chan data.Data) {
+func (h *Subscriber) Run(out chan api.Data) {
 	// start publishing
 	h.receiver = out
 
@@ -94,8 +95,8 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 				if h.props.Add(propertyTopic) {
 					// print only if not already subscribed
 					Log(
-						log.SRC, h.name,
-						log.EV, property,
+						SRC, h.name,
+						EV, property,
 					).Printf("discovered %s", propertyTopic)
 					h.subscribeToProperty(propertyTopic)
 				}
@@ -117,7 +118,7 @@ func (h *Subscriber) propertyChangeHandler(topic string, properties []string) {
 	for _, old := range nodeProps {
 		if !newProps.Contains(old) {
 			if h.props.Remove(old) {
-				Log(log.SRC, h.name).Debugf("removed %s", old)
+				Log(SRC, h.name).Debugf("removed %s", old)
 			}
 			h.MqttClient.Unsubscribe(old)
 		}
@@ -160,26 +161,22 @@ func (h *Subscriber) subscribeToProperty(topic string) {
 		payload := string(msg.Payload())
 
 		Log(
-			log.SRC, h.name,
-			log.EV, name,
-			log.VAL, payload,
+			SRC, h.name,
+			EV, name,
+			VAL, payload,
 		).Debugf("recv %s", msg.Topic())
 
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
 			Log(
-				log.SRC, h.name,
-				log.EV, name,
-				log.VAL, payload,
+				SRC, h.name,
+				EV, name,
+				VAL, payload,
 			).Error("float conversion error, skipping")
 			return
 		}
 
-		d := data.Data{
-			Name:  name,
-			Value: value,
-		}
-
+		d := data.NewData(name, value)
 		h.receiver <- d
 	})
 }

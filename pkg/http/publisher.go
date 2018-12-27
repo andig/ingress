@@ -7,8 +7,7 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/data"
-	"github.com/andig/ingress/pkg/log"
+	. "github.com/andig/ingress/pkg/log"
 )
 
 // Publisher is the HTTP data target
@@ -28,13 +27,13 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		method = "GET"
 	}
 	if method != "GET" && method != "POST" {
-		Log(log.TGT, c.Name).Fatal("invalid method " + c.Method)
+		Log(TGT, c.Name).Fatal("invalid method " + c.Method)
 	}
 	if method == "POST" && c.Payload == "" {
-		Log(log.TGT, c.Name).Fatal("missing payload configuration for POST method")
+		Log(TGT, c.Name).Fatal("missing payload configuration for POST method")
 	}
 	if method == "GET" && c.Payload != "" {
-		Log(log.TGT, c.Name).Fatal("invalid payload configuration for GET method")
+		Log(TGT, c.Name).Fatal("invalid payload configuration for GET method")
 	}
 
 	h := &Publisher{
@@ -53,9 +52,9 @@ func (h *Publisher) Discover() {
 }
 
 // Publish implements api.Source
-func (h *Publisher) Publish(d data.Data) {
+func (h *Publisher) Publish(d api.Data) {
 	url := d.MatchPattern(h.url)
-	Log(log.TGT, h.name).Debugf("send %s %s", h.method, url)
+	Log(TGT, h.name).Debugf("%s %s", h.method, url)
 
 	var resp *transport.Response
 	var req *transport.Request
@@ -70,7 +69,7 @@ func (h *Publisher) Publish(d data.Data) {
 	}
 
 	if err != nil {
-		Log(log.TGT, h.name).Warnf("create request failed %s", err)
+		Log(TGT, h.name).Errorf("create request failed %s", err)
 		return
 	}
 
@@ -79,14 +78,19 @@ func (h *Publisher) Publish(d data.Data) {
 		req.Header.Set(key, value)
 	}
 
+	// requestDump, err := httputil.DumpRequest(req, true)
+	// if err != nil {
+	// 	Log(TGT, h.name).Error(err)
+	// }
+
 	// execute request
 	resp, err = h.client.Do(req)
 	if err != nil {
-		Log(log.TGT, h.name).Warnf("send failed (%s)", err)
+		Log(TGT, h.name).Errorf("send failed %s", err)
 		return
 	}
 
 	if resp.StatusCode >= 300 {
-		Log(log.TGT, h.name).Warnf("send failed %s %d %s", h.method, resp.StatusCode, url)
+		Log(TGT, h.name).Errorf("%s %s %d", h.method, url, resp.StatusCode)
 	}
 }

@@ -28,7 +28,7 @@ func inject() {
 	time.Sleep(200 * time.Millisecond)
 	token := mqttClient.Publish("input/inject", 0, false, "3.14")
 	if token.WaitTimeout(100 * time.Millisecond) {
-		Log().Println("--> inject done")
+		Log().Println("inject done")
 	}
 
 	mqttClient.Publish("homie/meter1/$nodes", 1, true, "zaehlwerk1")
@@ -48,7 +48,7 @@ func checkVersion() {
 	Log().Printf("ingress v%s %s", tag, hash)
 	if res, err := latest.Check(githubTag, tag); err == nil {
 		if res.Outdated {
-			Log().Warnf("updates available - please upgrade to ingress %s", res.Current)
+			Log().Warnf("updates available - please upgrade to %s", res.Current)
 		}
 	}
 }
@@ -120,6 +120,7 @@ func main() {
 		go connectors.Run(mapper)
 
 		if c.Bool("test") {
+			time.Sleep(time.Second)
 			inject()
 		}
 

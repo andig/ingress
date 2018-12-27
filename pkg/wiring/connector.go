@@ -7,8 +7,7 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	"github.com/andig/ingress/pkg/data"
-	"github.com/andig/ingress/pkg/log"
+	. "github.com/andig/ingress/pkg/log"
 
 	"github.com/andig/ingress/pkg/http"
 	"github.com/andig/ingress/pkg/homie"
@@ -152,16 +151,16 @@ func (c *Connectors) TargetForName(name string) (api.Target, error) {
 // Run starts each Source's Run() function in a gofunc
 func (c *Connectors) Run(mapper *Mapper) {
 	for name, source := range c.sources {
-		Log().Printf("starting %s", name)
-		c := make(chan data.Data)
+		Log(SRC, name).Printf("starting event loop")
+		c := make(chan api.Data)
 
 		// start distributor
-		go func(name string, c chan data.Data) {
+		go func(name string, c chan api.Data) {
 			for {
 				d := <-c
 				Log(
-					log.SRC, name,
-					log.EV, d.Name,
+					SRC, name,
+					EV, d.GetName(),
 				).Debugf("processing")
 				go mapper.Process(name, d)
 			}
@@ -171,3 +170,4 @@ func (c *Connectors) Run(mapper *Mapper) {
 		go source.Run(c)
 	}
 }
+

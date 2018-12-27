@@ -3,6 +3,8 @@ package mqtt
 import (
 	"time"
 
+	. "github.com/andig/ingress/pkg/log"
+
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
