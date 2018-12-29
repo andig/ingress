@@ -137,8 +137,9 @@ type AggregateAvgAction struct {
 
 func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 	var sum float64
-	var prevTimestamp int64
+	var firstTimestamp, prevTimestamp int64
 
+	// there will always be > 1 element in the queue
 	for i := 0; i < q.Length(); i++ {
 		v, err := q.Get(i)
 		if err != nil {
@@ -146,14 +147,14 @@ func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 		}
 
 		d := v.(api.Data)
-		if i > 0 {
+		if i == 0 {
+			firstTimestamp = d.GetTimestamp()
+		} else {
 			sum += d.GetValue() * float64(d.GetTimestamp()-prevTimestamp)
 		}
 		prevTimestamp = d.GetTimestamp()
 	}
 
-	v, _ := q.Get(0)
-	firstTimestamp := v.(api.Data).GetTimestamp()
 	return sum / float64(prevTimestamp-firstTimestamp)
 }
 

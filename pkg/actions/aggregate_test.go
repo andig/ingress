@@ -15,7 +15,13 @@ func timerData(sec int64, value float64) api.Data {
 	return d
 }
 
-func expect(t *testing.T, res api.Data, timestamp int64, val float64) {
+func expectNil(t *testing.T, res api.Data) {
+	if res != nil {
+		t.Errorf("Unexpected output %v", res)
+	}
+}
+
+func expectData(t *testing.T, res api.Data, timestamp int64, val float64) {
 	if res == nil {
 		t.Fatalf("Missing output")
 	}
@@ -29,90 +35,70 @@ func expect(t *testing.T, res api.Data, timestamp int64, val float64) {
 }
 
 func TestAggregateMax(t *testing.T) {
-	var res api.Data
 	a := NewAggregateAction("max", 60*time.Second)
 
 	// 10 sec -> start of sequence
-	if a.Process(timerData(10, 10)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(10, 10)))
 
 	// 30 sec
-	if a.Process(timerData(30, 30)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(30, 30)))
 
 	// 60 sec
-	if a.Process(timerData(60, 20)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(60, 20)))
 
 	// 70 sec -> end of aggregation period
-	expect(t, a.Process(timerData(70, 10)), 70000, 30)
+	expectData(t, a.Process(timerData(70, 10)), 70000, 30)
 
 	// 80 sec
-	if a.Process(timerData(80, 80)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(80, 80)))
 
 	// 130 sec
-	expect(t, a.Process(timerData(130, 130)), 130000, 130)
+	expectData(t, a.Process(timerData(130, 130)), 130000, 130)
 
 	// 240 sec
-	expect(t, a.Process(timerData(240, 240)), 240000, 240)
+	expectData(t, a.Process(timerData(240, 240)), 240000, 240)
 }
 func TestAggregateSum(t *testing.T) {
-	var res api.Data
 	a := NewAggregateAction("sum", 60*time.Second)
 
 	// 10 sec -> start of sequence
-	if a.Process(timerData(10, 10)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(10, 10)))
 
 	// 30 sec
-	if a.Process(timerData(30, 30)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(30, 30)))
 
 	// 60 sec
-	if a.Process(timerData(60, 20)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(60, 20)))
 
 	// 70 sec -> end of aggregation period
-	expect(t, a.Process(timerData(70, 10)), 70000, 70)
+	expectData(t, a.Process(timerData(70, 10)), 70000, 70)
 
 	// 80 sec
-	if a.Process(timerData(80, 80)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(80, 80)))
 
 	// 130 sec
-	expect(t, a.Process(timerData(130, 130)), 130000, 210)
+	expectData(t, a.Process(timerData(130, 130)), 130000, 210)
 
 	// 240 sec
-	expect(t, a.Process(timerData(240, 240)), 240000, 240)
+	expectData(t, a.Process(timerData(240, 240)), 240000, 240)
 }
 
 func TestAggregateAvg(t *testing.T) {
-	var res api.Data
 	a := NewAggregateAction("avg", 60*time.Second)
 
 	// 10 sec -> start of sequence
-	if a.Process(timerData(10, 10)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(10, 10)))
 
 	// 10 sec -> start of sequence
-	if a.Process(timerData(20, 20)) != nil {
-		t.Errorf("Unexpected output %v", res)
-	}
+	expectNil(t, a.Process(timerData(20, 20)))
 
 	// 70 sec -> end of aggregation period
 	val := float64((20-10)*20+(70-20)*10) / (70 - 10)
-	expect(t, a.Process(timerData(70, 10)), 70000, val)
+	expectData(t, a.Process(timerData(70, 10)), 70000, val)
 
 	// 130 sec -> end of aggregation period
-	expect(t, a.Process(timerData(130, 130)), 130000, 130)
+	expectData(t, a.Process(timerData(130, 130)), 130000, 130)
+
+	// 240 sec -> after aggregation period
+	expectData(t, a.Process(timerData(240, 240)), 240000, 240)
 }
