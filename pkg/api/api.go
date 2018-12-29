@@ -32,5 +32,5 @@ type Target interface {
 // Action is the interface data targets must implement
 type Action interface {
 	// NewFromActionConfig(c config.Action)
-	Process(d Data)
+	Process(d Data) Data
 }

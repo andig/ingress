@@ -53,9 +53,10 @@ type Mapping struct {
 }
 
 type Action struct {
-	Name string `yaml:"name"`
-	Type string `yaml:"type"`
-	Mode string `yaml:"mode"`
+	Name   string `yaml:"name"`
+	Type   string `yaml:"type"`
+	Mode   string `yaml:"mode"`
+	Period string `yaml:"period"`
 }
 
 type Config struct {

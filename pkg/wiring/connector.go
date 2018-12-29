@@ -1,6 +1,7 @@
 package wiring
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -149,7 +150,7 @@ func (c *Connectors) TargetForName(name string) (api.Target, error) {
 }
 
 // Run starts each Source's Run() function in a gofunc
-func (c *Connectors) Run(mapper *Mapper) {
+func (c *Connectors) Run(ctx context.Context, mapper *Mapper) {
 	for name, source := range c.sources {
 		Log(SRC, name).Printf("starting event loop")
 		c := make(chan api.Data)
@@ -157,13 +158,17 @@ func (c *Connectors) Run(mapper *Mapper) {
 		// start distributor
 		go func(name string, c chan api.Data) {
 			for {
-				d := <-c
-				Log(
-					SRC, name,
-					EV, d.GetName(),
-				).Debugf("processing")
-				go mapper.Process(name, d)
+				select {
+				case <-ctx.Done():
+					return
+				case d := <-c:
+					Log(
+						SRC, name,
+						EV, d.GetName(),
+					).Debugf("processing")
+					go mapper.Process(name, d)
 			}
+		}
 		}(name, c)
 
 		// start source connector

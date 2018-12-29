@@ -35,32 +35,16 @@ func (m *Mapper) Process(source string, d api.Data) {
 		).Debug("routing")
 
 		// map and publish async
-		go m.mapAndPublish(&wire, d)
+		go m.processWire(&wire, d)
 	}
 }
 
 // async function for publishing
-func (m *Mapper) mapAndPublish(wire *Wire, d api.Data) {
-	if len(wire.Mappings) > 0 {
-		dataName := strings.ToLower(d.GetName())
-		for mappingName, mapping := range wire.Mappings {
-			for _, entry := range mapping {
-				if dataName == strings.ToLower(entry.From) {
-					Log(
-						EV, d.GetName(),
-						"mapping", mappingName,
-					).Debugf("mapping %s -> %s ", d.GetName(), entry.To)
-					d.SetName(entry.To)
-					goto MAPPED
-				}
-			}
-		}
-
-		// not mapped
-		Log(EV, d.GetName()).Debugf("no mapping - dropped")
+func (m *Mapper) processWire(wire *Wire, d api.Data) {
+	mapped := m.processMappings(wire, d)
+	if mapped == nil {
 		return
 	}
-MAPPED:
 
 	target, err := m.connectors.TargetForName(wire.Target)
 	if err != nil {
@@ -69,4 +53,28 @@ MAPPED:
 	}
 
 	target.Publish(d)
+}
+
+func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
+	if len(wire.Mappings) == 0 {
+		return d
+	}
+
+	dataName := strings.ToLower(d.GetName())
+	for mappingName, mapping := range wire.Mappings {
+		for _, entry := range mapping {
+			if dataName == strings.ToLower(entry.From) {
+				Log(
+					EV, d.GetName(),
+					"mapping", mappingName,
+				).Debugf("mapping %s -> %s ", d.GetName(), entry.To)
+				d.SetName(entry.To)
+				return d
+			}
+		}
+	}
+
+	// not mapped
+	Log(EV, d.GetName()).Debugf("no mapping - dropped")
+	return nil
 }

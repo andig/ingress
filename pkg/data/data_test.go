@@ -16,3 +16,14 @@ func TestMatchPattern(t *testing.T) {
 		t.Errorf("timestamp not replaced, got %s", s)
 	}
 }
+
+func TestEventID(t *testing.T) {
+	d := NewData("NAME", 1.234234)
+	if d.GetEventID() != 1 {
+		t.Errorf("unexpected event id %d", d.GetEventID())
+	}
+	d = NewData("NAME", 1.234234)
+	if d.GetEventID() != 2 {
+		t.Errorf("unexpected event id %d", d.GetEventID())
+	}
+}

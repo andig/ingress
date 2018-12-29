@@ -44,6 +44,10 @@ func NewData(name string, value float64) api.Data {
 	}
 }
 
+func (d *Data) String() string {
+	return fmt.Sprintf("%s:%s@%d", d.Name, d.ValStr(), d.Timestamp)
+}
+
 func (d *Data) GetEventID() int64 {
 	return d.EventID
 }

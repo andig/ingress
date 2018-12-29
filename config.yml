@@ -48,7 +48,7 @@ wires:
   - vz
 #   - mqtt-pub
   mappings:
-#   - homie-to-volkszaehler
+  - homie-to-volkszaehler
   actions:
   - agg5min
 
@@ -64,4 +64,5 @@ mappings:
 actions:
 - name: agg5min
   type: aggregate
-  mode: avg
+  mode: max
+  period: 5m

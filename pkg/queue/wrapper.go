@@ -2,18 +2,19 @@ package queue
 
 import (
 	"errors"
+	"fmt"
 
-	pqueue "github.com/eapache/queue"
+	equeue "github.com/eapache/queue"
 )
 
 // Queue is a fast, ring-buffered queue
 type Queue struct {
-	*pqueue.Queue
+	*equeue.Queue
 }
 
 // New creates Queue
 func New() *Queue {
-	return &Queue{pqueue.New()}
+	return &Queue{equeue.New()}
 }
 
 func recoverWithError() error {
@@ -55,4 +56,17 @@ func (q *Queue) Remove() (res interface{}, err error) {
 	}()
 
 	return q.Queue.Remove(), nil
+}
+
+// String representation of queue
+func (q *Queue) String() string {
+	s := "["
+	for i := 0; i < q.Length(); i++ {
+		if i > 0 {
+			s += ", "
+		}
+		v, _ := q.Get(i)
+		s += fmt.Sprintf("%v", v)
+	}
+	return s + "]"
 }

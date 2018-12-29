@@ -2,10 +2,10 @@ package wiring
 
 import (
 	"errors"
-	"log"
 	"sync"
 
 	"github.com/andig/ingress/pkg/config"
+	. "github.com/andig/ingress/pkg/log"
 )
 
 // Mapping maps data entity from name to name
@@ -22,10 +22,8 @@ type Mappings struct {
 
 // NewMappings creates a system wiring, validatated against available connectors
 func NewMappings(c []config.Mapping, conn *Connectors) *Mappings {
-	mappings := make(map[string][]Mapping, 0)
-
 	m := &Mappings{
-		mappings: mappings,
+		mappings: make(map[string][]Mapping, 0),
 	}
 
 	for _, mapping := range c {
@@ -37,14 +35,14 @@ func NewMappings(c []config.Mapping, conn *Connectors) *Mappings {
 
 func (m *Mappings) createMapping(conf config.Mapping, conn *Connectors) {
 	if conf.Name == "" {
-		log.Fatal("mappings: configuration error - missing mapping name")
+		Log().Fatal("configuration error - missing mapping name")
 	}
 
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
 	if _, ok := m.mappings[conf.Name]; ok {
-		log.Fatal("mappings: configuration error - cannot redefine mapping " + conf.Name)
+		Log().Fatal("configuration error - cannot redefine mapping " + conf.Name)
 	}
 
 	mapEntries := make([]Mapping, 0)

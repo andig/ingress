@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -117,7 +118,9 @@ func main() {
 		mapper := wiring.NewMapper(wires, connectors)
 		_ = actions
 		_ = mapper
-		go connectors.Run(mapper)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		go connectors.Run(ctx, mapper)
 
 		if c.Bool("test") {
 			time.Sleep(time.Second)
@@ -130,12 +133,13 @@ func main() {
 					time.Sleep(time.Second)
 					var memstats runtime.MemStats
 					runtime.ReadMemStats(&memstats)
-					fmt.Printf("%db\n", memstats.Alloc)
+					Log().Debugf("%db\n", memstats.Alloc)
 				}
 			}()
 		}
 
 		waitForCtrlC()
+		cancel() // cancel context
 	}
 
 	app.Run(os.Args)

@@ -41,6 +41,11 @@ func convertMap(fields ...interface{}) []interface{} {
 
 // Log returns a contextual logger
 func Log(fields ...interface{}) loggers.Advanced {
+	if logger == nil {
+		level = logrus.TraceLevel
+		logger = NewLogger()
+	}
+
 	fields = convertMap(fields...)
 	return logger.WithFields(fields...)
 }

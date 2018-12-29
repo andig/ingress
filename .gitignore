@@ -5,3 +5,4 @@ assets
 version.go
 embed.json
 embeddedassets.go
+launch.json
