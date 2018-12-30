@@ -9,30 +9,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Basics struct {
-	Name string
-	Type string
-	URL  string
-}
-
-type Credentials struct {
-	User     string
-	Password string
-}
-
 type Source struct {
-	Basics      `yaml:",inline"`
-	Credentials `yaml:",inline"`
-	Topic       string
+	Name     string
+	Type     string
+	URL      string
+	User     string // Credentials
+	Password string
+	Topic    string
 }
 
 type Target struct {
-	Basics      `yaml:",inline"`
-	Credentials `yaml:",inline"`
-	Topic       string
-	Method      string
-	Headers     map[string]string `yaml:"headers,omitempty"`
-	Payload     string
+	Name     string
+	Type     string
+	URL      string
+	User     string // Credentials
+	Password string
+	Topic    string
+	Method   string
+	Headers  map[string]string `yaml:"headers,omitempty"`
+	Payload  string
 }
 
 type Wire struct {
@@ -48,8 +43,8 @@ type MapEntry struct {
 }
 
 type Mapping struct {
-	Name string     `yaml:"name"`
-	Map  []MapEntry `yaml:"entries"`
+	Name    string     `yaml:"name"`
+	Entries []MapEntry `yaml:"entries"`
 }
 
 type Action struct {

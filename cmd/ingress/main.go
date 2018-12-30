@@ -15,9 +15,12 @@ import (
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/spf13/viper"
 	"github.com/tcnksm/go-latest"
 	"gopkg.in/urfave/cli.v1"
 )
+
+const DEFAULT_CONFIG = "ingress.yml"
 
 func inject() {
 	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
@@ -46,7 +49,6 @@ func checkVersion() {
 		Repository: "ingress",
 	}
 
-	Log().Printf("ingress v%s %s", tag, hash)
 	if res, err := latest.Check(githubTag, tag); err == nil {
 		if res.Outdated {
 			Log().Warnf("updates available - please upgrade to %s", res.Current)
@@ -74,8 +76,8 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Value: "config.yml",
-			Usage: "Config file",
+			Value: DEFAULT_CONFIG,
+			Usage: "Config file in /etc, ~/, ./",
 		},
 		cli.BoolFlag{
 			Name:  "dump, d",
@@ -98,12 +100,32 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		Configure(c.String("log"))
+		Log().Printf("ingress v%s %s", tag, hash)
+
 		if c.NArg() > 0 {
-			Log().Fatalf("Unexpected arguments: %v", c.Args())
+			Log().Fatalf("unexpected arguments: %v", c.Args())
 		}
 
 		var conf config.Config
-		conf.Load(c.String("config"))
+		viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
+
+		if configFile := c.String("config"); configFile != DEFAULT_CONFIG {
+			viper.SetConfigFile(configFile)
+		} else {
+			viper.SetConfigName("ingress") // name of config file (without extension)
+			viper.AddConfigPath("/etc")    // path to look for the config file in
+			viper.AddConfigPath("$HOME")   // call multiple times to add many search paths
+			viper.AddConfigPath(".")       // optionally look for config in the working directory
+		}
+
+		if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
+			Log().Fatal(err)
+		}
+
+		Log().Printf("using %s", viper.ConfigFileUsed())
+		if err := viper.Unmarshal(&conf); err != nil {
+			Log().Fatalf("failed parsing config file: %v", err)
+		}
 
 		if c.Bool("dump") {
 			conf.Dump()

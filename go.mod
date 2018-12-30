@@ -11,6 +11,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/sevlyar/go-daemon v0.1.4
 	github.com/sirupsen/logrus v1.2.0
+	github.com/spf13/viper v1.3.1
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc // indirect
 	gopkg.in/birkirb/loggers.v1 v1.1.0

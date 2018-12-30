@@ -46,7 +46,7 @@ func (m *Mappings) createMapping(conf config.Mapping, conn *Connectors) {
 	}
 
 	mapEntries := make([]Mapping, 0)
-	for _, mapEntry := range conf.Map {
+	for _, mapEntry := range conf.Entries {
 		e := Mapping{
 			From: mapEntry.From,
 			To:   mapEntry.To,
