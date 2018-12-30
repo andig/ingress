@@ -62,6 +62,7 @@ func (p *Publisher) Publish(d api.Data) {
 		).Errorf("send failed (%s)", err)
 		return
 	}
+	defer resp.Body.Close() // close body after checking for error
 
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)

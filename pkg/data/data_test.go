@@ -18,6 +18,9 @@ func TestMatchPattern(t *testing.T) {
 }
 
 func TestEventID(t *testing.T) {
+	// reset counter
+	eventID = 0
+
 	d := NewData("NAME", 1.234234)
 	if d.GetEventID() != 1 {
 		t.Errorf("unexpected event id %d", d.GetEventID())

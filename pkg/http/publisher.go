@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"io/ioutil"
 	transport "net/http"
 	"strings"
 
@@ -36,7 +37,7 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		Log(TGT, c.Name).Fatal("invalid payload configuration for GET method")
 	}
 
-	h := &Publisher{
+	p := &Publisher{
 		name:    c.Name,
 		url:     c.URL,
 		method:  method,
@@ -44,53 +45,66 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		headers: c.Headers,
 		client:  &transport.Client{},
 	}
-	return h
+	return p
 }
 
 // Discover implements api.Source
-func (h *Publisher) Discover() {
+func (p *Publisher) Discover() {
 }
 
 // Publish implements api.Source
-func (h *Publisher) Publish(d api.Data) {
-	url := d.MatchPattern(h.url)
-	Log(TGT, h.name).Debugf("%s %s", h.method, url)
+func (p *Publisher) Publish(d api.Data) {
+	url := d.MatchPattern(p.url)
+	Log(TGT, p.name).Debugf("%s %s", p.method, url)
 
 	var resp *transport.Response
 	var req *transport.Request
 	var err error
 	var payload string
 
-	if h.method == "GET" {
-		req, err = transport.NewRequest(h.method, url, nil)
+	if p.method == "GET" {
+		req, err = transport.NewRequest(p.method, url, nil)
 	} else { // POST
-		payload = d.MatchPattern(h.payload)
-		req, err = transport.NewRequest(h.method, url, bytes.NewBuffer([]byte(payload)))
+		payload = d.MatchPattern(p.payload)
+		req, err = transport.NewRequest(p.method, url, bytes.NewBuffer([]byte(payload)))
 	}
 
 	if err != nil {
-		Log(TGT, h.name).Errorf("create request failed %s", err)
+		Log(TGT, p.name).Errorf("create request failed %s", err)
 		return
 	}
 
 	// headers
-	for key, value := range h.headers {
+	for key, value := range p.headers {
 		req.Header.Set(key, value)
 	}
 
 	// requestDump, err := httputil.DumpRequest(req, true)
 	// if err != nil {
-	// 	Log(TGT, h.name).Error(err)
+	// 	Log(TGT, p.name).Error(err)
 	// }
 
 	// execute request
-	resp, err = h.client.Do(req)
+	resp, err = p.client.Do(req)
 	if err != nil {
-		Log(TGT, h.name).Errorf("send failed %s", err)
+		Log(TGT, p.name).Errorf("send failed %s", err)
 		return
 	}
+	defer resp.Body.Close() // close body after checking for error
 
-	if resp.StatusCode >= 300 {
-		Log(TGT, h.name).Errorf("%s %s %d", h.method, url, resp.StatusCode)
+	if resp.StatusCode != 200 {
+		Log(TGT, p.name).Errorf("%s %s %d", p.method, url, resp.StatusCode)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			Log(
+				TGT, p.name,
+			).Errorf("reading response failed (%s)", err)
+			return
+		}
+
+		Log(
+			TGT, p.name,
+		).Errorf("send failed (%s)", string(body))
 	}
 }
