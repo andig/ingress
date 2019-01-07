@@ -3,7 +3,7 @@ package wiring
 import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Wire connects source and target with associated mapping
@@ -25,27 +25,27 @@ func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *A
 	for _, wire := range c {
 		for _, source := range wire.Sources {
 			if _, err := conn.SourceForName(source); err != nil {
-				Log().Fatalf("cannot wire %s -> *, source not defined", source)
+				log.Fatalf("cannot wire %s -> *, source not defined", source)
 			}
 
 			for _, target := range wire.Targets {
 				if _, err := conn.TargetForName(target); err != nil {
-					Log().Fatalf("cannot wire %s -> %s, target not defined", source, target)
+					log.Fatalf("cannot wire %s -> %s, target not defined", source, target)
 				}
 
 				wireMappings := make([][]Mapping, 0)
 				for _, mapping := range wire.Mappings {
 					wireMapping, err := mappings.MappingsForName(mapping)
 					if err != nil {
-						Log().Fatalf("cannot wire %s -> %s, undefined mapping %s", source, target, mapping)
+						log.Fatalf("cannot wire %s -> %s, undefined mapping %s", source, target, mapping)
 					}
 
 					wireMappings = append(wireMappings, wireMapping)
 				}
 
-				Log(
-					SRC, source,
-					TGT, target,
+				log.Context(
+					log.SRC, source,
+					log.TGT, target,
 				).Printf("creating wire")
 
 				wire := Wire{
@@ -59,7 +59,7 @@ func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *A
 	}
 
 	if len(wires) == 0 {
-		Log().Println("no wires created - please check your configuration")
+		log.Println("no wires created - please check your configuration")
 	}
 
 	wiring := &Wiring{

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Mapping maps data entity from name to name
@@ -35,14 +35,14 @@ func NewMappings(c []config.Mapping, conn *Connectors) *Mappings {
 
 func (m *Mappings) createMapping(conf config.Mapping, conn *Connectors) {
 	if conf.Name == "" {
-		Log().Fatal("configuration error - missing mapping name")
+		log.Fatal("configuration error - missing mapping name")
 	}
 
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
 	if _, ok := m.mappings[conf.Name]; ok {
-		Log().Fatal("configuration error - cannot redefine mapping " + conf.Name)
+		log.Fatal("configuration error - cannot redefine mapping " + conf.Name)
 	}
 
 	mapEntries := make([]Mapping, 0)

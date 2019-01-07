@@ -1,12 +1,11 @@
 package log
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 
-	mapper "github.com/birkirb/loggers-mapper-logrus"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/birkirb/loggers.v1"
 )
 
 const (
@@ -17,8 +16,7 @@ const (
 	TGT = "trgt" // target
 )
 
-var logger loggers.Contextual
-var level logrus.Level
+var logger *logrus.Logger = logrus.StandardLogger()
 
 func convertMap(fields ...interface{}) []interface{} {
 	if len(fields) != 1 {
@@ -39,15 +37,24 @@ func convertMap(fields ...interface{}) []interface{} {
 	return list
 }
 
-// Log returns a contextual logger
-func Log(fields ...interface{}) loggers.Advanced {
-	if logger == nil {
-		level = logrus.TraceLevel
-		logger = NewLogger()
+// Context returns a contextual logger
+func Context(fields ...interface{}) *logrus.Entry {
+	fields = convertMap(fields...)
+
+	// convert
+	f := make(map[string]interface{}, len(fields)/2)
+	var key, value interface{}
+	for i := 0; i+1 < len(fields); i = i + 2 {
+		key = fields[i]
+		value = fields[i+1]
+		if s, ok := key.(string); ok {
+			f[s] = value
+		} else if s, ok := key.(fmt.Stringer); ok {
+			f[s.String()] = value
+		}
 	}
 
-	fields = convertMap(fields...)
-	return logger.WithFields(fields...)
+	return logger.WithFields(f)
 }
 
 func contextSort(keys []string) {
@@ -88,34 +95,16 @@ func contextSort(keys []string) {
 	}
 }
 
-// NewLogger creates default contextual logger
-func NewLogger() loggers.Contextual {
-	logrusLogger := logrus.New()
-	logrusLogger.Level = getLevel()
-	logrusLogger.SetFormatter(&logrus.TextFormatter{
+func Configure(lvl string) {
+	level, err := logrus.ParseLevel(lvl)
+	if err != nil {
+		logrus.Fatal("invalid log level " + lvl)
+	}
+
+	logrus.SetLevel(level)
+	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "01/02 15:04:05",
 		SortingFunc:     contextSort,
 	})
-
-	return &mapper.Logger{
-		Logger: logrusLogger,
-	}
-}
-
-func setLevel(lvl string) {
-	var err error
-	level, err = logrus.ParseLevel(lvl)
-	if err != nil {
-		logrus.Fatal("invalid log level " + lvl)
-	}
-}
-
-func getLevel() logrus.Level {
-	return level
-}
-
-func Configure(lvl string) {
-	setLevel(lvl)
-	logger = NewLogger()
 }

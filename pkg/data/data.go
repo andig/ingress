@@ -105,7 +105,7 @@ func (d *Data) MatchPattern(s string) string {
 		case "%timestamp%":
 			s = strings.Replace(s, match, strconv.FormatInt(d.Timestamp, 10), -1)
 			// default:
-			// 	log.Log().Fatalf("Invalid match pattern %s", s)
+			// 	log.log.Fatalf("Invalid match pattern %s", s)
 		}
 	}
 

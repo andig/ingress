@@ -8,9 +8,9 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 const topicPattern = "([^/]+$)"
@@ -54,29 +54,29 @@ func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOption
 }
 
 func (h *Subscriber) connectionHandler(client mqtt.Client) {
-	Log(SRC, h.name).Println("connected to " + ServerFromClient(client))
+	log.Context(log.SRC, h.name).Println("connected to " + ServerFromClient(client))
 }
 
 func (h *Subscriber) connectionLostHandler(client mqtt.Client, err error) {
-	Log(SRC, h.name).Warnf("disconnected from " + ServerFromClient(client))
+	log.Context(log.SRC, h.name).Warnf("disconnected from " + ServerFromClient(client))
 }
 
 // Run implements api.Source
 func (h *Subscriber) Run(out chan api.Data) {
-	Log(SRC, h.name).Printf(h.name+": subscribed to topic %s", h.rootTopic)
+	log.Context(log.SRC, h.name).Printf(h.name+": subscribed to topic %s", h.rootTopic)
 
 	h.MqttClient.Subscribe(h.rootTopic, 1, func(c mqtt.Client, msg mqtt.Message) {
-		Log(SRC, h.name).Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
+		log.Context(log.SRC, h.name).Printf(h.name+": recv (%s=%s)", msg.Topic(), msg.Payload())
 
 		payload := string(msg.Payload())
 		value, err := strconv.ParseFloat(payload, 64)
 		if err != nil {
-			Log(SRC, h.name).Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
+			log.Context(log.SRC, h.name).Printf(h.name+": float conversion error, skipping (%s=%s)", msg.Topic(), payload)
 			return
 		}
 
 		name := h.matchString(msg.Topic(), topicPattern)
-		Log(SRC, h.name).Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
+		log.Context(log.SRC, h.name).Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
 
 		data := data.NewData(name, value)
 		out <- data
@@ -86,7 +86,7 @@ func (h *Subscriber) Run(out chan api.Data) {
 func (h *Subscriber) matchString(s string, pattern string) string {
 	re, err := regexp.Compile(topicPattern)
 	if err != nil {
-		Log(SRC, h.name).Fatal("invalid regex pattern " + pattern)
+		log.Context(log.SRC, h.name).Fatal("invalid regex pattern " + pattern)
 	}
 
 	matches := re.FindStringSubmatch(s)

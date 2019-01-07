@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/spf13/viper"
-	"github.com/tcnksm/go-latest"
-	"gopkg.in/urfave/cli.v1"
+	latest "github.com/tcnksm/go-latest"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 const DEFAULT_CONFIG = "ingress.yml"
@@ -26,13 +26,13 @@ func inject() {
 	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
 	mqttClient := mqtt.NewClient(mqttOptions)
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		Log().Fatalf("mqtt: error connecting: %s", token.Error())
+		log.Fatalf("mqtt: error connecting: %s", token.Error())
 	}
 
 	time.Sleep(200 * time.Millisecond)
 	token := mqttClient.Publish("input/inject", 0, false, "3.14")
 	if token.WaitTimeout(100 * time.Millisecond) {
-		Log().Println("inject done")
+		log.Println("inject done")
 	}
 
 	mqttClient.Publish("homie/meter1/$nodes", 1, true, "zaehlwerk1")
@@ -51,7 +51,7 @@ func checkVersion() {
 
 	if res, err := latest.Check(githubTag, tag); err == nil {
 		if res.Outdated {
-			Log().Warnf("updates available - please upgrade to %s", res.Current)
+			log.Warnf("updates available - please upgrade to %s", res.Current)
 		}
 	}
 }
@@ -77,7 +77,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "config, c",
 			Value: DEFAULT_CONFIG,
-			Usage: "Config file in /etc, ~/, ./",
+			Usage: "Config file (search path ., ~ and /etc)",
 		},
 		cli.BoolFlag{
 			Name:  "dump, d",
@@ -99,32 +99,32 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) {
-		Configure(c.String("log"))
-		Log().Printf("ingress v%s %s", tag, hash)
+		log.Configure(c.String("log"))
+		log.Printf("ingress v%s %s", tag, hash)
 
 		if c.NArg() > 0 {
-			Log().Fatalf("unexpected arguments: %v", c.Args())
+			log.Fatalf("unexpected arguments: %v", c.Args())
 		}
 
 		var conf config.Config
 		viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
 
 		if configFile := c.String("config"); configFile != DEFAULT_CONFIG {
-			viper.SetConfigFile(configFile)
+			viper.SetConfigFile(configFile) // verbose config file
 		} else {
 			viper.SetConfigName("ingress") // name of config file (without extension)
-			viper.AddConfigPath("/etc")    // path to look for the config file in
-			viper.AddConfigPath("$HOME")   // call multiple times to add many search paths
-			viper.AddConfigPath(".")       // optionally look for config in the working directory
+			viper.AddConfigPath(".")
+			viper.AddConfigPath("$HOME")
+			viper.AddConfigPath("/etc")
 		}
 
 		if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
-			Log().Fatal(err)
+			log.Fatal(err)
 		}
 
-		Log().Printf("using %s", viper.ConfigFileUsed())
+		log.Printf("using %s", viper.ConfigFileUsed())
 		if err := viper.Unmarshal(&conf); err != nil {
-			Log().Fatalf("failed parsing config file: %v", err)
+			log.Fatalf("failed parsing config file: %v", err)
 		}
 
 		if c.Bool("dump") {
@@ -155,7 +155,7 @@ func main() {
 					time.Sleep(time.Second)
 					var memstats runtime.MemStats
 					runtime.ReadMemStats(&memstats)
-					Log().Debugf("%db\n", memstats.Alloc)
+					log.Debugf("%db\n", memstats.Alloc)
 				}
 			}()
 		}

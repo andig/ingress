@@ -8,7 +8,7 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Publisher is the HTTP data target
@@ -28,13 +28,13 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		method = "GET"
 	}
 	if method != "GET" && method != "POST" {
-		Log(TGT, c.Name).Fatal("invalid method " + c.Method)
+		log.Context(log.TGT, c.Name).Fatal("invalid method " + c.Method)
 	}
 	if method == "POST" && c.Payload == "" {
-		Log(TGT, c.Name).Fatal("missing payload configuration for POST method")
+		log.Context(log.TGT, c.Name).Fatal("missing payload configuration for POST method")
 	}
 	if method == "GET" && c.Payload != "" {
-		Log(TGT, c.Name).Fatal("invalid payload configuration for GET method")
+		log.Context(log.TGT, c.Name).Fatal("invalid payload configuration for GET method")
 	}
 
 	p := &Publisher{
@@ -55,7 +55,7 @@ func (p *Publisher) Discover() {
 // Publish implements api.Source
 func (p *Publisher) Publish(d api.Data) {
 	url := d.MatchPattern(p.url)
-	Log(TGT, p.name).Debugf("%s %s", p.method, url)
+	log.Context(log.TGT, p.name).Debugf("%s %s", p.method, url)
 
 	var resp *transport.Response
 	var req *transport.Request
@@ -70,7 +70,7 @@ func (p *Publisher) Publish(d api.Data) {
 	}
 
 	if err != nil {
-		Log(TGT, p.name).Errorf("create request failed %s", err)
+		log.Context(log.TGT, p.name).Errorf("create request failed %s", err)
 		return
 	}
 
@@ -81,29 +81,29 @@ func (p *Publisher) Publish(d api.Data) {
 
 	// requestDump, err := httputil.DumpRequest(req, true)
 	// if err != nil {
-	// 	Log(TGT, p.name).Error(err)
+	// 	log.Context(log.TGT, p.name).Error(err)
 	// }
 
 	// execute request
 	resp, err = p.client.Do(req)
 	if err != nil {
-		Log(TGT, p.name).Errorf("send failed %s", err)
+		log.Context(log.TGT, p.name).Errorf("send failed %s", err)
 		return
 	}
 	defer resp.Body.Close() // close body after checking for error
 
 	if resp.StatusCode != 200 {
-		Log(TGT, p.name).Errorf("%s %s %d", p.method, url, resp.StatusCode)
+		log.Context(log.TGT, p.name).Errorf("%s %s %d", p.method, url, resp.StatusCode)
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			Log(
+			log.Context(log.
 				TGT, p.name,
 			).Errorf("reading response failed (%s)", err)
 			return
 		}
 
-		Log(
+		log.Context(log.
 			TGT, p.name,
 		).Errorf("send failed (%s)", string(body))
 	}

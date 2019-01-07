@@ -3,9 +3,9 @@ package mqtt
 import (
 	"time"
 
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 const defaultTimeout = 2000 * time.Millisecond
@@ -46,7 +46,7 @@ func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
 
 	// connect
 	if token := m.MqttClient.Connect(); token.Wait() && token.Error() != nil {
-		Log().Fatal("mqtt: error connecting: ", token.Error())
+		log.Fatal("mqtt: error connecting: ", token.Error())
 	}
 }
 
@@ -56,9 +56,9 @@ func (m *MqttConnector) WaitForToken(token mqtt.Token, timeout time.Duration) bo
 		if token.Error() == nil {
 			return true
 		}
-		Log().Printf("mqtt: error: %s", token.Error())
+		log.Printf("mqtt: error: %s", token.Error())
 	} else {
-		Log().Printf("mqtt: timeout")
+		log.Printf("mqtt: timeout")
 	}
 	return false
 }

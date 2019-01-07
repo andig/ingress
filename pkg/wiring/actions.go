@@ -8,7 +8,7 @@ import (
 	"github.com/andig/ingress/pkg/actions"
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 type Actions struct {
@@ -25,13 +25,13 @@ func NewActions(c []config.Action) *Actions {
 		case "aggregate":
 			period, err := time.ParseDuration(action.Period)
 			if err != nil {
-				Log().Fatalf("configuration error: %s", err)
+				log.Fatalf("configuration error: %s", err)
 			}
 			a = actions.NewAggregateAction(action.Mode, period)
 		}
 
 		if _, ok := actionsMap[action.Name]; ok {
-			Log().Fatal("configuration error: cannot redefine action " + action.Name)
+			log.Fatal("configuration error: cannot redefine action " + action.Name)
 		}
 
 		actionsMap[action.Name] = a

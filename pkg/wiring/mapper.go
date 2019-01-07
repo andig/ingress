@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/andig/ingress/pkg/api"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Mapper handles data transfer over wires
@@ -28,10 +28,10 @@ func (m *Mapper) Process(source string, d api.Data) {
 	d.Normalize() // normalize data before sending to any target
 
 	for _, wire := range m.wiring.WiresForSource(source) {
-		Log(
-			EV, d.GetName(),
-			SRC, wire.Source,
-			TGT, wire.Target,
+		log.Context(
+			log.EV, d.GetName(),
+			log.SRC, wire.Source,
+			log.TGT, wire.Target,
 		).Debug("routing")
 
 		// map and publish async
@@ -48,7 +48,7 @@ func (m *Mapper) processWire(wire *Wire, d api.Data) {
 
 	target, err := m.connectors.TargetForName(wire.Target)
 	if err != nil {
-		Log().Fatal("invalid target " + wire.Target)
+		log.Fatal("invalid target " + wire.Target)
 		return
 	}
 
@@ -64,8 +64,8 @@ func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
 	for mappingName, mapping := range wire.Mappings {
 		for _, entry := range mapping {
 			if dataName == strings.ToLower(entry.From) {
-				Log(
-					EV, d.GetName(),
+				log.Context(
+					log.EV, d.GetName(),
 					"mapping", mappingName,
 				).Debugf("mapping %s -> %s ", d.GetName(), entry.To)
 				d.SetName(entry.To)
@@ -75,6 +75,6 @@ func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
 	}
 
 	// not mapped
-	Log(EV, d.GetName()).Debugf("no mapping - dropped")
+	log.Context(log.EV, d.GetName()).Debugf("no mapping - dropped")
 	return nil
 }

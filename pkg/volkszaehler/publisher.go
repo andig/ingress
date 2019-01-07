@@ -8,7 +8,7 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 )
 
 // Publisher is the volkszaehler data taerget
@@ -29,9 +29,7 @@ func NewFromTargetConfig(c config.Target) *Publisher {
 
 func (p *Publisher) discoverEntities(entities []Entity) {
 	for _, e := range entities {
-		Log(
-			TGT, p.name,
-		).Printf("s %s: %s", e.UUID, e.Type, e.Title)
+		log.Context(log.TGT, p.name).Printf("s %s: %s", e.UUID, e.Type, e.Title)
 	}
 	for _, e := range entities {
 		if e.Type == TypeGroup {
@@ -43,10 +41,10 @@ func (p *Publisher) discoverEntities(entities []Entity) {
 
 // Publish implements api.Source
 func (p *Publisher) Publish(d api.Data) {
-	Log(
-		TGT, p.name,
-		EV, d.GetName(),
-		VAL, d.ValStr(),
+	log.Context(
+		log.TGT, p.name,
+		log.EV, d.GetName(),
+		log.VAL, d.ValStr(),
 	).Debugf("send")
 
 	// format url and payload
@@ -57,9 +55,7 @@ func (p *Publisher) Publish(d api.Data) {
 
 	resp, err := p.Api.Post(url, payload)
 	if err != nil {
-		Log(
-			TGT, p.name,
-		).Errorf("send failed (%s)", err)
+		log.Context(log.TGT, p.name).Errorf("send failed (%s)", err)
 		return
 	}
 	defer resp.Body.Close() // close body after checking for error
@@ -67,22 +63,16 @@ func (p *Publisher) Publish(d api.Data) {
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			Log(
-				TGT, p.name,
-			).Errorf("reading response failed (%s)", err)
+			log.Context(log.TGT, p.name).Errorf("reading response failed (%s)", err)
 			return
 		}
 
 		var res ErrorResponse
 		if err := json.Unmarshal(body, &res); err != nil {
-			Log(
-				TGT, p.name,
-			).Errorf("decoding response failed (%s)", err)
+			log.Context(log.TGT, p.name).Errorf("decoding response failed (%s)", err)
 			return
 		}
 
-		Log(
-			TGT, p.name,
-		).Errorf("send failed (%s)", res.Exception.Message)
+		log.Context(log.TGT, p.name).Errorf("send failed (%s)", res.Exception.Message)
 	}
 }

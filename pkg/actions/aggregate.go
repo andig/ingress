@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/api"
-	. "github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/log"
 	"github.com/andig/ingress/pkg/queue"
 )
 
@@ -31,7 +31,7 @@ func NewAggregateAction(mode string, period time.Duration) (res api.Action) {
 			aggregateAction: a,
 		}
 	default:
-		Log().Fatalf("Invalid aggregation mode %s", mode)
+		log.Fatalf("Invalid aggregation mode %s", mode)
 	}
 
 	return res
@@ -98,7 +98,7 @@ func (a *AggregateMaxAction) Process(d api.Data) api.Data {
 			if val >= ev.acc {
 				ev.acc = val
 			} else {
-				Log(EV, d.GetName()).Warn("unexpected non-monotonic value in aggregation")
+				log.Context(log.EV, d.GetName()).Warn("unexpected non-monotonic value in aggregation")
 			}
 		},
 		func(ev *event) api.Data {
@@ -143,7 +143,7 @@ func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 	for i := 0; i < q.Length(); i++ {
 		v, err := q.Get(i)
 		if err != nil {
-			Log().Fatalf("invalid queue access %s", err)
+			log.Fatalf("invalid queue access %s", err)
 		}
 
 		d := v.(api.Data)
