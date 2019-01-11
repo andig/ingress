@@ -170,7 +170,7 @@ mappings:
 - name: homie-to-volkszaehler
   entries:
   - from: energy # homie property name
-  - to: 014648c0-197f-11e8-9f68-afd012b00a13 # volkszaehler uuid
+    to: 014648c0-197f-11e8-9f68-afd012b00a13 # volkszaehler uuid
 ```
 
 To use a defined mapping it must be assigned to the respective wire:
