@@ -2,8 +2,10 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	transport "net/http"
+	"net/url"
 	"strings"
 
 	"github.com/andig/ingress/pkg/api"
@@ -22,22 +24,25 @@ type Publisher struct {
 }
 
 // NewFromTargetConfig creates HTTP data target
-func NewFromTargetConfig(c config.Target) api.Target {
+func NewFromTargetConfig(c config.Target) (p api.Target, err error) {
+	if _, err = url.ParseRequestURI(c.URL); err != nil {
+		return p, err
+	}
 	method := strings.ToUpper(c.Method)
 	if method == "" {
 		method = "GET"
 	}
 	if method != "GET" && method != "POST" {
-		log.Context(log.TGT, c.Name).Fatal("invalid method " + c.Method)
+		return p, errors.New("invalid method " + c.Method)
 	}
 	if method == "POST" && c.Payload == "" {
-		log.Context(log.TGT, c.Name).Fatal("missing payload configuration for POST method")
+		return p, errors.New("missing payload configuration for POST method")
 	}
 	if method == "GET" && c.Payload != "" {
-		log.Context(log.TGT, c.Name).Fatal("invalid payload configuration for GET method")
+		return p, errors.New("invalid payload configuration for GET method")
 	}
 
-	p := &Publisher{
+	p = &Publisher{
 		name:    c.Name,
 		url:     c.URL,
 		method:  method,
@@ -45,7 +50,7 @@ func NewFromTargetConfig(c config.Target) api.Target {
 		headers: c.Headers,
 		client:  &transport.Client{},
 	}
-	return p
+	return p, nil
 }
 
 // Discover implements api.Source

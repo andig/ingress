@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"net/url"
 	"regexp"
 	"strconv"
 	"sync"
@@ -24,10 +25,14 @@ type Subscriber struct {
 }
 
 // NewFromSourceConfig creates MQTT data source
-func NewFromSourceConfig(c config.Source) api.Source {
+func NewFromSourceConfig(c config.Source) (s api.Source, err error) {
 	topic := c.Topic
 	if topic == "" {
 		topic = "#"
+	}
+
+	if _, err = url.ParseRequestURI(c.URL); err != nil {
+		return s, err
 	}
 
 	mqttOptions := NewMqttClientOptions(c.URL, c.User, c.Password)
@@ -35,7 +40,7 @@ func NewFromSourceConfig(c config.Source) api.Source {
 	mqttClient := mqtt.NewClient(mqttOptions)
 	mqttSubscriber.Connect(mqttClient)
 
-	return mqttSubscriber
+	return mqttSubscriber, nil
 }
 
 // NewSubscriber creates MQTT data source

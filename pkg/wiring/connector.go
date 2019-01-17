@@ -50,18 +50,24 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 	}
 
 	var conn api.Source
+	var err error
+
 	switch strings.ToLower(conf.Type) {
 	case "telemetry":
-		conn = telemetry.NewFromSourceConfig(conf)
+		conn, err = telemetry.NewFromSourceConfig(conf)
 		break
 	case "mqtt":
-		conn = mqtt.NewFromSourceConfig(conf)
+		conn, err = mqtt.NewFromSourceConfig(conf)
 		break
 	case "homie":
-		conn = homie.NewFromSourceConfig(conf)
+		conn, err = homie.NewFromSourceConfig(conf)
 		break
 	default:
 		log.Fatal("invalid source type: " + conf.Type)
+	}
+
+	if err != nil {
+		log.Context(log.SRC, conf.Name).Fatal(err)
 	}
 
 	c.mux.Lock()
@@ -79,18 +85,24 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 	}
 
 	var conn api.Target
+	var err error
+
 	switch conf.Type {
 	case "http":
-		conn = http.NewFromTargetConfig(conf)
+		conn, err = http.NewFromTargetConfig(conf)
 		break
 	case "mqtt":
-		conn = mqtt.NewFromTargetConfig(conf)
+		conn, err = mqtt.NewFromTargetConfig(conf)
 		break
 	case "volkszaehler":
-		conn = volkszaehler.NewFromTargetConfig(conf)
+		conn, err = volkszaehler.NewFromTargetConfig(conf)
 		break
 	default:
 		log.Fatal("Invalid output type: " + conf.Type)
+	}
+
+	if err != nil {
+		log.Context(log.TGT, conf.Name).Fatal(err)
 	}
 
 	c.mux.Lock()

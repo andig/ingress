@@ -2,6 +2,7 @@ package homie
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,17 +29,21 @@ type Subscriber struct {
 }
 
 // NewFromSourceConfig creates Homie/MQTT data source
-func NewFromSourceConfig(c config.Source) api.Source {
+func NewFromSourceConfig(c config.Source) (s api.Source, err error) {
 	topic := c.Topic
 	if topic == "" {
 		topic = "homie"
+	}
+
+	if _, err = url.ParseRequestURI(c.URL); err != nil {
+		return s, err
 	}
 
 	mqttOptions := mq.NewMqttClientOptions(c.URL, c.User, c.Password)
 	homieSubscriber := NewSubscriber(c.Name, topic, mqttOptions)
 	mqttClient := mqtt.NewClient(mqttOptions)
 	homieSubscriber.Connect(mqttClient)
-	return homieSubscriber
+	return homieSubscriber, nil
 }
 
 // NewSubscriber creates Homie/MQTT data source

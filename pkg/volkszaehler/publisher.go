@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"time"
 
 	"github.com/andig/ingress/pkg/api"
@@ -18,13 +19,21 @@ type Publisher struct {
 }
 
 // NewFromTargetConfig creates volkszaehler data target
-func NewFromTargetConfig(c config.Target) *Publisher {
-	api := NewAPI(c.URL, 1*time.Second, false)
-	vz := &Publisher{
+func NewFromTargetConfig(c config.Target) (p *Publisher, err error) {
+	if _, err = url.ParseRequestURI(c.URL); err != nil {
+		return p, err
+	}
+
+	if c.Timeout == 0 {
+		c.Timeout = 1 * time.Second
+	}
+
+	api := NewAPI(c.URL, c.Timeout, false)
+	p = &Publisher{
 		Api:  api,
 		name: c.Name,
 	}
-	return vz
+	return p, nil
 }
 
 func (p *Publisher) discoverEntities(entities []Entity) {

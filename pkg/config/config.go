@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/andig/ingress/pkg/log"
 
@@ -22,6 +23,7 @@ type Target struct {
 	Name     string
 	Type     string
 	URL      string
+	Timeout  time.Duration
 	User     string // Credentials
 	Password string
 	Topic    string

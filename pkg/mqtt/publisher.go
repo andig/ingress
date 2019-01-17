@@ -1,6 +1,8 @@
 package mqtt
 
 import (
+	"net/url"
+
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
@@ -16,13 +18,17 @@ type Publisher struct {
 }
 
 // NewFromTargetConfig creates MQTT data target
-func NewFromTargetConfig(c config.Target) api.Target {
+func NewFromTargetConfig(c config.Target) (t api.Target, err error) {
+	if _, err = url.ParseRequestURI(c.URL); err != nil {
+		return t, err
+	}
+
 	mqttOptions := NewMqttClientOptions(c.URL, c.User, c.Password)
 	mqttPublisher := NewPublisher(c.Name, c.Topic, mqttOptions)
 	mqttClient := mqtt.NewClient(mqttOptions)
 	mqttPublisher.Connect(mqttClient)
 
-	return mqttPublisher
+	return mqttPublisher, nil
 }
 
 // NewPublisher creates MQTT data target
