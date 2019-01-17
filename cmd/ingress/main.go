@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"reflect"
 	"runtime"
 	"sync"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/wiring"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/spf13/viper"
@@ -23,6 +26,7 @@ import (
 const DEFAULT_CONFIG = "ingress.yml"
 
 func inject() {
+	panic("foo")
 	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
 	mqttClient := mqtt.NewClient(mqttOptions)
 	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
@@ -54,6 +58,64 @@ func checkVersion() {
 			log.Warnf("updates available - please upgrade to %s", res.Current)
 		}
 	}
+}
+
+type MapUnmarshaler interface {
+	UnmarshalMap(interface{}) (interface{}, error)
+}
+
+func parseConfig(c *cli.Context) (conf config.Config, err error) {
+	viper.SetConfigType("yaml")
+
+	if configFile := c.String("config"); configFile != DEFAULT_CONFIG {
+		viper.SetConfigFile(configFile) // verbose config file
+	} else {
+		viper.SetConfigName("ingress") // name of config file (without extension)
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("$HOME")
+		viper.AddConfigPath("/etc")
+	}
+
+	if err = viper.ReadInConfig(); err != nil { // Handle errors reading the config file
+		return conf, err
+	}
+
+	log.Printf("using %s", viper.ConfigFileUsed())
+
+	decodeHook := func(from reflect.Type, to reflect.Type, v interface{}) (interface{}, error) {
+		unmarshalerType := reflect.TypeOf((*MapUnmarshaler)(nil)).Elem()
+		if to.Implements(unmarshalerType) {
+			in := []reflect.Value{reflect.New(to).Elem(), reflect.ValueOf(v)}
+			method, _ := to.MethodByName("UnmarshalMap")
+
+			r := method.Func.Call(in)
+			fmt.Printf("%v %v\n", from, to)
+			fmt.Printf("%v\n", v)
+			fmt.Printf("%v\n", r)
+		}
+		return v, nil
+	}
+
+	var meta mapstructure.Metadata
+	msConf := func(conf *mapstructure.DecoderConfig) {
+		conf.Metadata = &meta
+		conf.WeaklyTypedInput = true
+		conf.DecodeHook = decodeHook
+	}
+
+	if err = viper.Unmarshal(&conf, viper.DecoderConfigOption(msConf)); err != nil {
+		return conf, errors.Wrap(err, "failed parsing config file")
+	}
+
+	if len(meta.Unused) > 0 {
+		return conf, errors.New(fmt.Sprintf("invalid config entries: %v", meta.Unused))
+	}
+
+	if c.Bool("dump") {
+		conf.Dump()
+	}
+
+	return conf, err
 }
 
 func waitForCtrlC() {
@@ -98,37 +160,19 @@ func main() {
 		},
 	}
 
+	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
+		log.Configure(c.String("log"))
+		log.Fatal(err)
+		return err
+	}
+
 	app.Action = func(c *cli.Context) {
 		log.Configure(c.String("log"))
 		log.Printf("ingress v%s %s", tag, hash)
 
-		if c.NArg() > 0 {
-			log.Fatalf("unexpected arguments: %v", c.Args())
-		}
-
-		var conf config.Config
-		viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
-
-		if configFile := c.String("config"); configFile != DEFAULT_CONFIG {
-			viper.SetConfigFile(configFile) // verbose config file
-		} else {
-			viper.SetConfigName("ingress") // name of config file (without extension)
-			viper.AddConfigPath(".")
-			viper.AddConfigPath("$HOME")
-			viper.AddConfigPath("/etc")
-		}
-
-		if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
+		conf, err := parseConfig(c)
+		if err != nil {
 			log.Fatal(err)
-		}
-
-		log.Printf("using %s", viper.ConfigFileUsed())
-		if err := viper.Unmarshal(&conf); err != nil {
-			log.Fatalf("failed parsing config file: %v", err)
-		}
-
-		if c.Bool("dump") {
-			conf.Dump()
 		}
 
 		go checkVersion()

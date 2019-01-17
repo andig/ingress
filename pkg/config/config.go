@@ -88,3 +88,8 @@ func (c *Config) Dump() {
 	}
 	fmt.Println(string(d))
 }
+
+func (a Action) UnmarshalMap(v interface{}) (interface{}, error) {
+	// v = mapstructure.Decode(v)
+	return v, nil
+}

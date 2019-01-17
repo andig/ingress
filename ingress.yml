@@ -10,7 +10,7 @@ sources:
 #   type: telemetry
 - name: homie
   type: homie
-  url: tcp://localhost:1883
+#   url: tcp://localhost:1883
 # - name: mqtt-sub
 #   type: mqtt
 #   url: tcp://localhost:1883
@@ -33,10 +33,10 @@ targets:
 # - name: vz
 #   type: volkszaehler
 #   url: https://demo.volkszaehler.org/
-- name: mqtt-pub
-  type: mqtt
-  url: tcp://localhost:1883
-  topic: telemetry/%name%
+# - name: mqtt-pub
+#   type: mqtt
+#   url: tcp://localhost:1883
+#   topic: telemetry/%name%
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
