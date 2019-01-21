@@ -4,6 +4,10 @@ go:
   - "1.11"
   - "master"
 go_import_path: github.com/andig/ingress
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
 env:
   - "PATH=/home/travis/gopath/bin:$PATH"
 before_script:
