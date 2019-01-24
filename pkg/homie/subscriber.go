@@ -13,9 +13,14 @@ import (
 	"github.com/andig/ingress/pkg/data"
 	"github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
+	"github.com/andig/ingress/pkg/registry"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+func init() {
+	registry.RegisterSource("homie", NewFromSourceConfig)
+}
 
 // Subscriber Homie/MQTT data source
 type Subscriber struct {

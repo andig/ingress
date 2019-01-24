@@ -6,9 +6,14 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/registry"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+func init() {
+	registry.RegisterTarget("mqtt", NewFromTargetConfig)
+}
 
 // Publisher is the MQTT data target
 type Publisher struct {

@@ -3,18 +3,14 @@ package wiring
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/registry"
 
-	"github.com/andig/ingress/pkg/homie"
-	"github.com/andig/ingress/pkg/http"
-	"github.com/andig/ingress/pkg/mqtt"
 	"github.com/andig/ingress/pkg/telemetry"
-	"github.com/andig/ingress/pkg/volkszaehler"
 )
 
 // Connectors manages data sources and targets
@@ -49,21 +45,14 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		log.Fatal("configuration error: missing source name")
 	}
 
-	var conn api.Source
-	var err error
+	provider, ok := registry.SourceProviders[conf.Type]
+	if !ok {
+		log.Fatalf("Invalid source type: %s", conf.Type)
+	}
 
-	switch strings.ToLower(conf.Type) {
-	case "telemetry":
-		conn, err = telemetry.NewFromSourceConfig(conf)
-		break
-	case "mqtt":
-		conn, err = mqtt.NewFromSourceConfig(conf)
-		break
-	case "homie":
-		conn, err = homie.NewFromSourceConfig(conf)
-		break
-	default:
-		log.Fatal("invalid source type: " + conf.Type)
+	conn, err := provider(conf)
+	if err != nil {
+		log.Context(log.TGT, conf.Name).Fatal(err)
 	}
 
 	if err != nil {
@@ -84,23 +73,12 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		log.Fatal("configuration error: missing target name")
 	}
 
-	var conn api.Target
-	var err error
-
-	switch conf.Type {
-	case "http":
-		conn, err = http.NewFromTargetConfig(conf)
-		break
-	case "mqtt":
-		conn, err = mqtt.NewFromTargetConfig(conf)
-		break
-	case "volkszaehler":
-		conn, err = volkszaehler.NewFromTargetConfig(conf)
-		break
-	default:
-		log.Fatal("Invalid output type: " + conf.Type)
+	provider, ok := registry.TargetProviders[conf.Type]
+	if !ok {
+		log.Fatalf("Invalid target type: %s", conf.Type)
 	}
 
+	conn, err := provider(conf)
 	if err != nil {
 		log.Context(log.TGT, conf.Name).Fatal(err)
 	}

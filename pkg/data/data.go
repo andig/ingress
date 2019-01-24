@@ -13,7 +13,7 @@ import (
 
 var mux sync.Mutex
 var eventID int64
-var patternRegex = regexp.MustCompile(`%\w+?%`)
+var patternRegex = regexp.MustCompile(`@\w+?@`)
 
 type Data struct {
 	EventID   int64
@@ -96,13 +96,13 @@ func (d *Data) MatchPattern(s string) string {
 	matches := patternRegex.FindAllString(s, -1)
 	for _, match := range matches {
 		switch match {
-		case "%id%":
+		case "@id@":
 			s = strings.Replace(s, match, d.ID, -1)
-		case "%name%":
+		case "@name@":
 			s = strings.Replace(s, match, d.Name, -1)
-		case "%value%":
+		case "@value@":
 			s = strings.Replace(s, match, d.ValStr(), -1)
-		case "%timestamp%":
+		case "@timestamp@":
 			s = strings.Replace(s, match, strconv.FormatInt(d.Timestamp, 10), -1)
 			// default:
 			// 	log.log.Fatalf("Invalid match pattern %s", s)

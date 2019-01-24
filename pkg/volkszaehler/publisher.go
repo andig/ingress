@@ -10,7 +10,12 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/registry"
 )
+
+func init() {
+	registry.RegisterTarget("volkszaehler", NewFromTargetConfig)
+}
 
 // Publisher is the volkszaehler data taerget
 type Publisher struct {
@@ -19,7 +24,7 @@ type Publisher struct {
 }
 
 // NewFromTargetConfig creates volkszaehler data target
-func NewFromTargetConfig(c config.Target) (p *Publisher, err error) {
+func NewFromTargetConfig(c config.Target) (p api.Target, err error) {
 	if _, err = url.ParseRequestURI(c.URL); err != nil {
 		return p, err
 	}
@@ -38,7 +43,7 @@ func NewFromTargetConfig(c config.Target) (p *Publisher, err error) {
 
 func (p *Publisher) discoverEntities(entities []Entity) {
 	for _, e := range entities {
-		log.Context(log.TGT, p.name).Printf("s %s: %s", e.UUID, e.Type, e.Title)
+		log.Context(log.TGT, p.name).Printf("discovered %s (%s): %s", e.UUID, e.Type, e.Title)
 	}
 	for _, e := range entities {
 		if e.Type == TypeGroup {

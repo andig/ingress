@@ -10,11 +10,16 @@ import (
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 	"github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/registry"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 const topicPattern = "([^/]+$)"
+
+func init() {
+	registry.RegisterSource("mqtt", NewFromSourceConfig)
+}
 
 // Subscriber is the MQTT data source
 type Subscriber struct {

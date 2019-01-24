@@ -11,7 +11,12 @@ import (
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
+	"github.com/andig/ingress/pkg/registry"
 )
+
+func init() {
+	registry.RegisterTarget("http", NewFromTargetConfig)
+}
 
 // Publisher is the HTTP data target
 type Publisher struct {
