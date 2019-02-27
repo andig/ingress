@@ -13,3 +13,4 @@ const (
 EOF
 
 ls -l cmd/ingress
+cat cmd/ingress/version.go

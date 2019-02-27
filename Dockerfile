@@ -13,13 +13,15 @@ RUN apk update && apk add --no-cache git ca-certificates tzdata alpine-sdk && up
 RUN adduser -D -g '' appuser
 
 WORKDIR /build
+
+# make assets before copying to avoid dependency on .git folder
+RUN make assets
 COPY . .
 
 # Fetch dependencies.
 
 # Using go mod.
 RUN go mod download
-RUN make assets
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress cmd/ingress/main.go
