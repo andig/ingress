@@ -11,3 +11,5 @@ const (
 	hash = "$HASH"
 )
 EOF
+
+ls -l cmd/ingress
