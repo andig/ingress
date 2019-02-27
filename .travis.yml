@@ -23,9 +23,10 @@ script:
 after_success:
   - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=andig/ingress
+  - docker pull $REPO:latest
   - |
     if [ "$TRAVIS_BRANCH" == "master" ] || true; then 
-      docker build -f Dockerfile -t $REPO:$COMMIT .
+      docker build --cache-from $REPO:latest -f Dockerfile -t $REPO:$COMMIT .
       docker tag $REPO:$COMMIT $REPO:latest
       docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
       docker push $REPO
