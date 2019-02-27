@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 RELEASE=$(pwd)/release
 BIN=$(pwd)/bin
