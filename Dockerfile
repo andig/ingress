@@ -21,6 +21,8 @@ COPY .git .git
 # Using go mod.
 RUN go mod download
 RUN make assets
+RUN ["/bin/sh", "-c", "ls cmd/ingress"]
+RUN ["/bin/sh", "-c", "cat cmd/ingress/version.go"]
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress cmd/ingress/main.go
