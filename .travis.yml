@@ -2,16 +2,30 @@ sudo: false
 language: go
 go:
   - "1.11"
-  - "master"
 go_import_path: github.com/andig/ingress
 cache:
   directories:
     - $HOME/.cache/go-build
     - $HOME/gopath/pkg/mod
 env:
-  - "PATH=/home/travis/gopath/bin:$PATH"
+  global:
+    - secure: "Ch4mK0qcdwqLhIHO8S7DLCs7HxbBtaW5pa5MgyqTqiSm/3FOjCQMW9UFpWz8sOdLW1pi+4djXajRFUW0FZLr/dvT+yeZUdreU8ZP6Vvr7QphFDiI7J7uerH7HdFmjMotJxeP7tH2WMCUCTBMJyrIQ/2ZOc3HYoCRIQtSNGHDfSWJ5zEjArCUFE+PUADuyJdGK+B1wUyb72UfoI9jdiLLYJcM7fcXBAHaj/HnsymE1vyvWygrRiuMpcJElbpz+bl1MdbI8VlQg9kO6fvwSO68yzfIxyd5rurTVinMmqWo3BgggiF5lf8I9h1aT3JMDYtSCRW3FTg0PkwdTMS9du2woyjHrcODh3jo+h36EUzPvwHDWr3WFqbLsfJKB++3w7Lb2gjEaOc7RONlqh9c2wbq3ZlpPB+da1XcgEuDf35Iayx7Oj2b9NdvytjIbTrGAO7GiS7y5vLaQ2nL+rFooQPdE8jUsamTqPGNPPVKvNw6HHBAai769ZzUq7bq1hem0GqBKxTprAmFC9IpiBnaHFYL0KgEh1HXTnKAfrUBqunOeeUifIXzKG1GqwX1qhzYbYHTKd+N3whegXD+5vyMSF21N5PUb4puF56EWJkLPbcNLYwlO3+AVIMwhYoahDJKa5r5suS5C/nk2dNgQ6/Ip/tGrSHjnrmY5QwpXGYsv+WX7io="
+    - secure: "yfCtlemajepHPR7QpfLeqWTx6D20bxhKYTsMOY8y+PR0SA4MrelAx+C8BltbClPgELhu3fqzaRarBcO6tN8srSbeqTuqZ3t2VF2hI+9K0CSL/cPuuQB7TRKnByVSXs7h2vzYxz1cPIBkIxzo1UW9vlqKwk51nBAfBZq5uEBrarUiuz9G025s+NCcLBgFDWxZjU6WF5jRrLGnZ3dXr9ervzGYwhdYA3rXU041vy27o9YdvyRA/qMkIzubLJATyofhxMJQtwzAf8ob7EG9c2OF0asV33hk+R4av7D89ljT6yJDh3XCmO+5/sXiK2zfyX+Gb4NoybQQ5VETtUHb5LIggj4jKEzxvZAQLokTsMrgEwacwYeXvlSmNOXHypvobJJswGoofnHkEafIvypgeAa8Epjhbj35VwHzCzgkl7Ka/A3hFrRCCyX3ABzEEVk0W/bXG0WQ6ptOoZ20c+f9mw8zvMX0d2CNZGdC7hViW33//nhIKcYsoKR7Jf3eMqa0i6vIgDtHcJU45oKnAjAxoByM/o2y4dvWZlGutk6i3AzDNTpHSWgg1TsR5qQgegW3omgE3HxdVPuTsPPyWZIciioAibM/Pyx9NFnH3CapzJr7cFQGp9uxrF/YVjLr+CAnLJZK1MbfRczpvsriK1QIH0VAhTtFYqFrmaBBdixMJy579pM="
+    - secure: "rxaqpFa0HKVgxU5ca5CLAhPVlfCBiOGzPU6FWD/jYxLWbf/h1clJlUyOPyDYIjhtVNXRlC/1aQmqsVA/D53O9knX6HEF08SY5PaB3w0KQzBGsbpAp5MFMUw5gJQeiTWZde2l9OG9fjxX59WDkrv4oUfc72IH+cW1fxRFfUAS71v6a8ZCPPnMRfpjqx1pqWcTUKonHdJ0MMnGJ52qEllCX+i/C0aHn9ceo3BeqOYO2el7qPk41XfeSgJlHmISZ9GbNlA5FfTEg9thYG3fc45agUxRdam2EUMzkxDDGLnOkj7sx0wqV0ueyDeQ3g+iyJjFkknwnENYgQiOR7//en77K7P9iEHGf0PBSkKHIn2nGN7X9YU/q7gyUM2p0UjJVR5XPR0XrhLMLs8sHjZPBRCvFmZkttPDgI4Akir1salJq9U9ifF4EzMV3nJ+4jm9jdTddeHk+BCh8rlWb2jasoJMuFwJGvSfTj19jO/rJVTfXla3VvhUbreTP5GcNuJWXoGMkHtORi9x1Pm/IT94jgs/gWM9RBb8vbVaESI+2KL/xKv55OPr/2Bua66b+Hq0T5PFqvWk0Zx+cWldiLuoP/DRRhiaXJjeLLYJ/R7gG4sprzABxFwmO3rNajRLh1e3CYALvGy4FA2OfZYGp4WZOAuxChNql0yy0vDN10MCGo2DuEE="
+    - PATH=/home/travis/gopath/bin:$PATH
+    - COMMIT=${TRAVIS_COMMIT::8}
 before_script:
   - export GO111MODULE=on
 script:
   - make all
   - make test
+after_success:
+  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+  - export REPO=andig/ingress
+  - |
+    if [ "$TRAVIS_BRANCH" == "master" ] || true; then 
+      docker build -f Dockerfile -t $REPO:$COMMIT .
+      docker tag $REPO:$COMMIT $REPO:latest
+      docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+      docker push $REPO
+    fi
