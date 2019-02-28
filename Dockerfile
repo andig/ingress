@@ -1,7 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-# golang alpine 1.11.5
+# syntax = tonistiigi/dockerfile:runmount20180607
 FROM golang:alpine as builder
 
 # Install git + SSL ca certificates.
@@ -15,14 +15,14 @@ RUN adduser -D -g '' appuser
 WORKDIR /build
 COPY . .
 
-# Fetch dependencies.
-
-# Using go mod.
-RUN go mod download
+# Generate files
 RUN make assets
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress github.com/andig/ingress/cmd/ingress
+ENV CGO_ENABLED=0
+ARG GOOS=linux
+# RUN --mount=target=/root/.cache,type=cache go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress github.com/andig/ingress/cmd/ingress
+RUN go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress github.com/andig/ingress/cmd/ingress
 
 #############################
 ## STEP 2 build a small image
