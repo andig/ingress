@@ -11,6 +11,3 @@ const (
 	hash = "$HASH"
 )
 EOF
-
-ls -l cmd/ingress
-cat cmd/ingress/version.go

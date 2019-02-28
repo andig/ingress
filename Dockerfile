@@ -14,18 +14,15 @@ RUN adduser -D -g '' appuser
 
 WORKDIR /build
 COPY . .
-COPY .git .git
 
 # Fetch dependencies.
 
 # Using go mod.
 RUN go mod download
 RUN make assets
-RUN ["/bin/sh", "-c", "ls cmd/ingress"]
-RUN ["/bin/sh", "-c", "cat cmd/ingress/version.go"]
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress cmd/ingress/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/ingress github.com/andig/ingress/cmd/ingress
 
 #############################
 ## STEP 2 build a small image
