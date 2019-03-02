@@ -9,22 +9,19 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/api"
+	"github.com/andig/ingress/pkg/log"
 )
 
 var mux sync.Mutex
 var eventID int64
-var patternRegex = regexp.MustCompile(`@\w+?@`)
+var patternRegex = regexp.MustCompile(`{(\w+?)(:([\w\d%:. ]+))?}`)
 
 type Data struct {
-	EventID   int64
+	eventID   int64
 	ID        string
-	Name      string
-	Timestamp int64
-	Value     float64
-}
-
-func Timestamp() int64 {
-	return int64(time.Now().UnixNano() / 1e6)
+	name      string
+	timestamp time.Time
+	value     float64
 }
 
 func GenerateEventID() int64 {
@@ -34,79 +31,131 @@ func GenerateEventID() int64 {
 	return eventID
 }
 
-// NewData creates data event with consecutive id and current timestamp
-func NewData(name string, value float64) api.Data {
+// New creates data event with consecutive id and current timestamp
+func New(name string, value float64, timestamp ...time.Time) api.Data {
+	var ts time.Time
+	if len(timestamp) > 0 {
+		ts = timestamp[0]
+	} else {
+		ts = time.Now()
+	}
+
 	return &Data{
-		EventID:   GenerateEventID(),
-		Timestamp: Timestamp(),
-		Name:      name,
-		Value:     value,
+		eventID:   GenerateEventID(),
+		timestamp: ts,
+		name:      name,
+		value:     value,
 	}
 }
 
 func (d *Data) String() string {
-	return fmt.Sprintf("%s:%s@%d", d.Name, d.ValStr(), d.Timestamp)
+	return fmt.Sprintf("%s:%s@%d", d.name, d.ValStr(), d.timestamp.UnixNano()/1e6)
 }
 
-func (d *Data) GetEventID() int64 {
-	return d.EventID
+func (d *Data) EventID() int64 {
+	return d.eventID
 }
 
-func (d *Data) GetName() string {
-	return d.Name
+func (d *Data) Name() string {
+	return d.name
 }
 
 func (d *Data) SetName(name string) {
-	d.Name = name
+	d.name = name
 }
 
-func (d *Data) GetValue() float64 {
-	return d.Value
+func (d *Data) Value() float64 {
+	return d.value
 }
 
 func (d *Data) SetValue(value float64) {
-	d.Value = value
+	d.value = value
 }
 
-func (d *Data) GetTimestamp() int64 {
-	return d.Timestamp
+// Timestamp returns ms timestamp
+func (d *Data) Timestamp() time.Time {
+	return d.timestamp
 }
 
-func (d *Data) SetTimestamp(timestamp int64) {
-	d.Timestamp = timestamp
+// SetTimestamp sets ms timestamp
+func (d *Data) SetTimestamp(timestamp time.Time) {
+	d.timestamp = timestamp
 }
 
 func (d *Data) Normalize() {
-	if d.Timestamp == 0 {
-		d.Timestamp = Timestamp()
-	}
+	// if d.timestamp == 0 {
+	// 	d.timestamp = Timestamp()
+	// }
 
 	// if d.ID == "" {
-	// 	d.ID = d.Name
-	// } else if d.Name == "" {
-	// 	d.Name = d.ID
+	// 	d.ID = d.name
+	// } else if d.name == "" {
+	// 	d.name = d.ID
 	// }
 }
 
 func (d *Data) ValStr() string {
-	return fmt.Sprintf("%.3f", d.Value)
+	return fmt.Sprintf("%.3f", d.value)
 }
 
-func (d *Data) MatchPattern(s string) string {
-	matches := patternRegex.FindAllString(s, -1)
+func (d *Data) FormatTimestamp(format string) (res string) {
+	// default milliseconds
+	if format == "" {
+		format = "ms"
+	}
+
+	var ts int64
+
+	switch format {
+	case "s":
+		ts = d.timestamp.Unix()
+	case "ms":
+		ts = d.timestamp.UnixNano() / 1e6
+	case "us":
+		ts = d.timestamp.UnixNano() / 1e3
+	case "ns":
+		ts = d.timestamp.UnixNano()
+	default:
+		// return timestamp formatted by golang pattern
+		return d.timestamp.Format(format)
+	}
+
+	res = strconv.FormatInt(ts, 10)
+	return res
+}
+
+func (d *Data) MatchPattern(s string) (res string) {
+	matches := patternRegex.FindAllStringSubmatch(s, -1)
+
 	for _, match := range matches {
-		switch match {
-		case "@id@":
-			s = strings.Replace(s, match, d.ID, -1)
-		case "@name@":
-			s = strings.Replace(s, match, d.Name, -1)
-		case "@value@":
-			s = strings.Replace(s, match, d.ValStr(), -1)
-		case "@timestamp@":
-			s = strings.Replace(s, match, strconv.FormatInt(d.Timestamp, 10), -1)
-			// default:
-			// 	log.log.Fatalf("Invalid match pattern %s", s)
+		var val string
+		literal := match[0]
+		name := strings.ToLower(match[1])
+		format := match[3]
+
+		switch name {
+		case "id":
+			val = d.ID
+			if format != "" {
+				val = fmt.Sprintf(format, val)
+			}
+		case "name":
+			val = d.name
+			if format != "" {
+				val = fmt.Sprintf(format, val)
+			}
+		case "value":
+			if format == "" {
+				format = "%.3f"
+			}
+			val = fmt.Sprintf(format, d.value)
+		case "timestamp":
+			val = d.FormatTimestamp(format)
+		default:
+			log.Fatalf("Invalid name pattern %s", s)
 		}
+
+		s = strings.Replace(s, literal, val, -1)
 	}
 
 	return s

@@ -88,7 +88,7 @@ func (h *Subscriber) Run(out chan api.Data) {
 		name := h.matchString(msg.Topic(), topicPattern)
 		log.Context(log.SRC, h.name).Printf(h.name+": matched topic (id=%s,name=%s)", name, name)
 
-		data := data.NewData(name, value)
+		data := data.New(name, value)
 		out <- data
 	})
 }

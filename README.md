@@ -76,13 +76,13 @@ Since we're using a simple HTTP configuration for the target `vz`, we'll need to
 ```yaml
 - name: vz
   type: http
-  url: https://demo.volkszaehler.org/middleware.php/data/%name%.json
+  url: https://demo.volkszaehler.org/middleware.php/data/{name}.json
   method: POST
   headers:
     Content-type: application/json
     Accept: application/json
   payload: >-
-    [[%timestamp%,%value%]]
+    [[{timestamp},{value}]]
 ```
 
 The HTTP target `url` and the POST `payload` data are built from the received data using the define templates. Templates can contain the following variables:
@@ -90,6 +90,14 @@ The HTTP target `url` and the POST `payload` data are built from the received da
 - `name`: name of the input data reading
 - `value`: value of the input data reading as formatted string
 - `timestamp`: timestamp when the input data was received
+
+#### Patterns
+
+Whenever a data source or target supports configurable payloads, the `{variable:format}` syntax can be used to customize the output. Possible formats are as understood by golang `fmt.Printf()`. Timestamp formatting additionally supports s/ms/us/ns as format or any valid format of golang `time.Format()`. The following defaults are used:
+
+- name: name as string (equivalent `{name:%s}`)
+- value: value as float with 3 significant digits (equivalent `{value:%.3f}`)
+- timestamp: unix timestamp in milliseconds (equivalent `{timestamp:s}`)
 
 ### Testing
 
