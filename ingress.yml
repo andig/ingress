@@ -22,21 +22,21 @@ sources:
 targets:
 - name: vz
   type: http
-  url: https://demo.volkszaehler.org/middleware.php/data/@name@.json
+  url: https://demo.volkszaehler.org/middleware.php/data/{name}.json
 #   url: http://localhost
   method: POST
   headers:
     Content-type: application/json
     Accept: application/json
   payload: >-
-    [[@timestamp@,@value@]]
+    [[{timestamp:ms},{value}]]
 # - name: vz
 #   type: volkszaehler
 #   url: https://demo.volkszaehler.org/
 - name: mqtt-pub
   type: mqtt
   url: tcp://localhost:1883
-  topic: telemetry/@name@
+  topic: telemetry/{name}
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:

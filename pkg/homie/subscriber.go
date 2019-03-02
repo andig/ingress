@@ -186,7 +186,7 @@ func (h *Subscriber) subscribeToProperty(topic string) {
 			return
 		}
 
-		d := data.NewData(name, value)
+		d := data.New(name, value)
 		h.receiver <- d
 	})
 }

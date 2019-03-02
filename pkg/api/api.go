@@ -1,17 +1,19 @@
 package api
 
+import "time"
+
 // Data is the event interface
 type Data interface {
-	GetEventID() int64
+	EventID() int64
 
-	GetName() string
+	Name() string
 	SetName(name string)
 
-	GetValue() float64
+	Value() float64
 	SetValue(value float64)
 
-	GetTimestamp() int64
-	SetTimestamp(timestamp int64)
+	Timestamp() time.Time
+	SetTimestamp(timestamp time.Time)
 
 	ValStr() string
 	Normalize()

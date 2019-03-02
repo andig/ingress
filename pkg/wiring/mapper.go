@@ -29,7 +29,7 @@ func (m *Mapper) Process(source string, d api.Data) {
 
 	for _, wire := range m.wiring.WiresForSource(source) {
 		log.Context(
-			log.EV, d.GetName(),
+			log.EV, d.Name(),
 			log.SRC, wire.Source,
 			log.TGT, wire.Target,
 		).Debug("routing")
@@ -60,14 +60,14 @@ func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
 		return d
 	}
 
-	dataName := strings.ToLower(d.GetName())
+	dataName := strings.ToLower(d.Name())
 	for mappingName, mapping := range wire.Mappings {
 		for _, entry := range mapping {
 			if dataName == strings.ToLower(entry.From) {
 				log.Context(
-					log.EV, d.GetName(),
+					log.EV, d.Name(),
 					"mapping", mappingName,
-				).Debugf("mapping %s -> %s ", d.GetName(), entry.To)
+				).Debugf("mapping %s -> %s ", d.Name(), entry.To)
 				d.SetName(entry.To)
 				return d
 			}
@@ -75,6 +75,6 @@ func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
 	}
 
 	// not mapped
-	log.Context(log.EV, d.GetName()).Debugf("no mapping - dropped")
+	log.Context(log.EV, d.Name()).Debugf("no mapping - dropped")
 	return nil
 }

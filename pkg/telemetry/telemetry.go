@@ -59,8 +59,8 @@ func (h *Telemetry) GetMetrics() []api.Data {
 
 	runtime.ReadMemStats(&memstats)
 	data := []api.Data{
-		data.NewData("NumGoroutine", float64(runtime.NumGoroutine())),
-		data.NewData("Alloc", float64(memstats.Alloc)),
+		data.New("NumGoroutine", float64(runtime.NumGoroutine())),
+		data.New("Alloc", float64(memstats.Alloc)),
 	}
 
 	return data

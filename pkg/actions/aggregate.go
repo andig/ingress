@@ -39,7 +39,7 @@ func NewAggregateAction(mode string, period time.Duration) (res api.Action) {
 
 type event struct {
 	acc        float64
-	lastUpdate int64
+	lastUpdate time.Time
 	queue      *queue.Queue
 }
 
@@ -57,25 +57,24 @@ func (a *aggregateAction) process(d api.Data,
 	a.mux.Lock()
 	defer a.mux.Unlock()
 
-	if ev, ok := a.events[d.GetName()]; ok {
+	if ev, ok := a.events[d.Name()]; ok {
 		// update the value
 		updatefunc(ev)
 
 		// make sure time.After passes when timestamps identical
-		now := time.Unix(0, d.GetTimestamp()*1e6)
-		lastUpdate := time.Unix(0, ev.lastUpdate*1e6-1)
-		if now.After(lastUpdate.Add(a.period)) {
+		periodEnd := ev.lastUpdate.Add(a.period)
+		if d.Timestamp().After(periodEnd) || d.Timestamp().Equal(periodEnd) {
 			d := resultfunc(ev)
-			ev.lastUpdate = d.GetTimestamp()
+			ev.lastUpdate = d.Timestamp()
 			return d
 		}
 	} else {
 		// first event is swallowed
 		ev := &event{
-			lastUpdate: d.GetTimestamp(),
+			lastUpdate: d.Timestamp(),
 		}
 		initfunc(ev)
-		a.events[d.GetName()] = ev
+		a.events[d.Name()] = ev
 	}
 
 	// either first value or time not elapsed
@@ -91,14 +90,14 @@ type AggregateMaxAction struct {
 func (a *AggregateMaxAction) Process(d api.Data) api.Data {
 	return a.process(d,
 		func(ev *event) {
-			ev.acc = d.GetValue()
+			ev.acc = d.Value()
 		},
 		func(ev *event) {
-			val := d.GetValue()
+			val := d.Value()
 			if val >= ev.acc {
 				ev.acc = val
 			} else {
-				log.Context(log.EV, d.GetName()).Warn("unexpected non-monotonic value in aggregation")
+				log.Context(log.EV, d.Name()).Warn("unexpected non-monotonic value in aggregation")
 			}
 		},
 		func(ev *event) api.Data {
@@ -117,10 +116,10 @@ type AggregateSumAction struct {
 func (a *AggregateSumAction) Process(d api.Data) api.Data {
 	return a.process(d,
 		func(ev *event) {
-			ev.acc = d.GetValue()
+			ev.acc = d.Value()
 		},
 		func(ev *event) {
-			ev.acc += d.GetValue()
+			ev.acc += d.Value()
 		},
 		func(ev *event) api.Data {
 			d.SetValue(ev.acc)
@@ -137,7 +136,7 @@ type AggregateAvgAction struct {
 
 func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 	var sum float64
-	var firstTimestamp, prevTimestamp int64
+	var firstTimestamp, prevTimestamp time.Time
 
 	// there will always be > 1 element in the queue
 	for i := 0; i < q.Length(); i++ {
@@ -148,14 +147,14 @@ func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 
 		d := v.(api.Data)
 		if i == 0 {
-			firstTimestamp = d.GetTimestamp()
+			firstTimestamp = d.Timestamp()
 		} else {
-			sum += d.GetValue() * float64(d.GetTimestamp()-prevTimestamp)
+			sum += d.Value() * float64(d.Timestamp().Sub(prevTimestamp).Nanoseconds()/1e6)
 		}
-		prevTimestamp = d.GetTimestamp()
+		prevTimestamp = d.Timestamp()
 	}
 
-	return sum / float64(prevTimestamp-firstTimestamp)
+	return sum / float64(prevTimestamp.Sub(firstTimestamp).Nanoseconds()/1e6)
 }
 
 // Process implements the Action interface.

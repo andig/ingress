@@ -57,15 +57,15 @@ func (p *Publisher) discoverEntities(entities []Entity) {
 func (p *Publisher) Publish(d api.Data) {
 	log.Context(
 		log.TGT, p.name,
-		log.EV, d.GetName(),
+		log.EV, d.Name(),
 		log.VAL, d.ValStr(),
 	).Debugf("send")
 
 	// format url and payload
-	url := fmt.Sprintf("/data/%s.json", d.GetName())
+	url := fmt.Sprintf("/data/%s.json", d.Name())
 	payload := fmt.Sprintf(`[
 		[%d,%s]
-	]`, d.GetTimestamp(), d.ValStr())
+	]`, d.Timestamp().UnixNano()/1e6, d.ValStr())
 
 	resp, err := p.Api.Post(url, payload)
 	if err != nil {

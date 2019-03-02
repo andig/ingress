@@ -75,7 +75,7 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 
 	provider, ok := registry.TargetProviders[conf.Type]
 	if !ok {
-		log.Fatalf("Invalid target type: %s", conf.Type)
+		log.Fatalf("invalid target type: %s", conf.Type)
 	}
 
 	conn, err := provider(conf)
@@ -154,7 +154,7 @@ func (c *Connectors) Run(ctx context.Context, mapper *Mapper) {
 				case d := <-c:
 					log.Context(
 						log.SRC, name,
-						log.EV, d.GetName(),
+						log.EV, d.Name(),
 					).Debugf("processing")
 					go mapper.Process(name, d)
 				}

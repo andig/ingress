@@ -9,9 +9,8 @@ import (
 )
 
 func timerData(sec int64, value float64) api.Data {
-	tm := time.Unix(sec, 0)
-	d := data.NewData("ev", value)
-	d.SetTimestamp(tm.UnixNano() / 1e6)
+	ts := time.Unix(sec, 0)
+	d := data.New("ev", value, ts)
 	return d
 }
 
@@ -26,10 +25,11 @@ func expectData(t *testing.T, res api.Data, timestamp int64, val float64) {
 		t.Fatalf("Missing output")
 	}
 
-	if res.GetTimestamp() != timestamp {
+	ts := time.Unix(0, timestamp*1e6)
+	if res.Timestamp() != ts {
 		t.Errorf("Unexpected output %v", res)
 	}
-	if res.GetValue() != val {
+	if res.Value() != val {
 		t.Errorf("Unexpected output %v", res)
 	}
 }
