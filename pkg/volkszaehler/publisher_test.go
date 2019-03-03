@@ -7,9 +7,9 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	c := config.Target{
-		Name: "test",
-		URL:  "https://demo.volkszaehler.org/",
+	c := config.Generic{
+		"name": "test",
+		"url":  "https://demo.volkszaehler.org/",
 	}
 
 	_, err := NewFromTargetConfig(c)

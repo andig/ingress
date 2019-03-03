@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/api"
+	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/data"
 )
 
@@ -35,7 +36,12 @@ func expectData(t *testing.T, res api.Data, timestamp int64, val float64) {
 }
 
 func TestAggregateMax(t *testing.T) {
-	a := NewAggregateAction("max", 60*time.Second)
+	a, err := NewAggMaxFromActionConfig(
+		config.Generic{"period": "60s"},
+	)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// 10 sec -> start of sequence
 	expectNil(t, a.Process(timerData(10, 10)))
@@ -59,7 +65,12 @@ func TestAggregateMax(t *testing.T) {
 	expectData(t, a.Process(timerData(240, 240)), 240000, 240)
 }
 func TestAggregateSum(t *testing.T) {
-	a := NewAggregateAction("sum", 60*time.Second)
+	a, err := NewAggSumFromActionConfig(
+		config.Generic{"period": "60s"},
+	)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// 10 sec -> start of sequence
 	expectNil(t, a.Process(timerData(10, 10)))
@@ -84,7 +95,12 @@ func TestAggregateSum(t *testing.T) {
 }
 
 func TestAggregateAvg(t *testing.T) {
-	a := NewAggregateAction("avg", 60*time.Second)
+	a, err := NewAggAvgFromActionConfig(
+		config.Generic{"period": "60s"},
+	)
+	if err != nil {
+		t.Error(err)
+	}
 
 	// 10 sec -> start of sequence
 	expectNil(t, a.Process(timerData(10, 10)))

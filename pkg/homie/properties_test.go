@@ -27,7 +27,7 @@ func TestAddContains(t *testing.T) {
 	}
 }
 
-func TestRenoveContains(t *testing.T) {
+func TestRemoveContains(t *testing.T) {
 	d := NewPropertySet("foo", "bar", "baz")
 	if s := d.All(); len(s) != 3 {
 		t.Errorf("unexpected %s", s)
