@@ -16,6 +16,7 @@ type Data interface {
 
 	Timestamp() time.Time
 	SetTimestamp(timestamp time.Time)
+	TimestampForPrecision(precision string) int64
 
 	ValStr() string
 	Normalize()

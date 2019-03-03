@@ -98,23 +98,30 @@ func (d *Data) ValStr() string {
 	return fmt.Sprintf("%.3f", d.value)
 }
 
+func (d *Data) TimestampForPrecision(precision string) int64 {
+	switch strings.ToLower(precision) {
+	case "s":
+		return d.timestamp.Unix()
+	case "ms":
+		return d.timestamp.UnixNano() / 1e6
+	case "us":
+		return d.timestamp.UnixNano() / 1e3
+	case "ns":
+		return d.timestamp.UnixNano()
+	default:
+		panic("invalid precision: " + precision)
+	}
+}
+
 func (d *Data) FormatTimestamp(format string) (res string) {
-	// default milliseconds
+	var ts int64
 	if format == "" {
-		format = "ms"
+		format = "ms" // default milliseconds
 	}
 
-	var ts int64
-
 	switch format {
-	case "s":
-		ts = d.timestamp.Unix()
-	case "ms":
-		ts = d.timestamp.UnixNano() / 1e6
-	case "us":
-		ts = d.timestamp.UnixNano() / 1e3
-	case "ns":
-		ts = d.timestamp.UnixNano()
+	case "s", "ms", "us", "ns":
+		ts = d.TimestampForPrecision(format)
 	default:
 		// return timestamp formatted by golang pattern
 		return d.timestamp.Format(format)
