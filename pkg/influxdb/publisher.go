@@ -2,7 +2,6 @@ package influxdb
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
 
 	influx "github.com/influxdata/influxdb1-client"
@@ -56,12 +55,11 @@ func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
 		c.Precision = "ms" // match volkszaehler behaviour
 	}
 
-	conf := influx.Config{
+	conn, err := influx.NewClient(influx.Config{
 		URL:      *uri,
 		Username: c.User,
 		Password: c.Password,
-	}
-	conn, err := influx.NewClient(conf)
+	})
 	if err != nil {
 		return p, err
 	}
@@ -118,7 +116,6 @@ func (p *Publisher) dataToPoint(d api.Data) influx.Point {
 		Time:        d.Timestamp(),
 		Precision:   p.Precision,
 	}
-	fmt.Println(point)
 	return point
 }
 
