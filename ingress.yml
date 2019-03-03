@@ -1,13 +1,14 @@
 # Sources and targets describe a list of source and target datasources.
 # All data sources are uniquely identified by their name.
 #
+
 # Valid source types:
 # - telemetry (internal runtime data)
 # - homie
 # - mqtt (planned)
 sources:
-# - name: telemetry
-#   type: telemetry
+- name: telemetry
+  type: telemetry
 - name: homie
   type: homie
   url: tcp://localhost:1883
@@ -19,6 +20,7 @@ sources:
 # Valid target types:
 # - volkszaehler
 # - volkszaehler-push (planned)
+
 targets:
 - name: vz
   type: http
@@ -37,9 +39,28 @@ targets:
   type: mqtt
   url: tcp://localhost:1883
   topic: telemetry/{name}
+- name: influx
+  type: influxdb
+  # url: http://nas.fritz.box:9999
+  url: http://localhost:8087
+  database: volkszaehler
+  measurement: "{name}"
+  precision: ms
+  # fields:
+  #   timestamp: "{timestamp:ns}" # use timestamp with ns precision as "timestamp" field
+  #   value: "{value}" # use value as "value" field
+  tags:
+    source: ingress # mark as coming from ingress
+    title: "{name}" # use name as title tag
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
+- sources: 
+  - telemetry
+  targets:
+  - influx
+  actions:
+  - passtelemetry
 - sources: 
   - homie
 #   - mqtt-sub
@@ -63,6 +84,8 @@ mappings:
 ## Actions transform data submitted to a wire
 actions:
 - name: agg5min
-  type: aggregate
-  mode: max
+  type: aggsum
   period: 5m
+- name: passtelemetry
+  type: passfilter
+  patterns: NumGo
