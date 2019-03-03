@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	ID  = "id"   // source
-	SRC = "src"  // source
-	EV  = "evt"  // event
-	VAL = "val"  // value
-	TGT = "trgt" // target
+	ID  = "id"     // source
+	ACT = "act"    // source
+	SRC = "src"    // source
+	EV  = "evt"    // event
+	VAL = "val"    // value
+	TGT = "target" // target
 )
 
 var logger *logrus.Logger = logrus.StandardLogger()

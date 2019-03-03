@@ -6,15 +6,46 @@ import (
 	"time"
 
 	"github.com/andig/ingress/pkg/api"
+	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
 	"github.com/andig/ingress/pkg/queue"
+	"github.com/andig/ingress/pkg/registry"
 )
 
-// NewAggregateAction creates an aggregatoin action of desired type
-func NewAggregateAction(mode string, period time.Duration) (res api.Action) {
+func init() {
+	registry.RegisterAction("aggsum", NewAggSumFromActionConfig)
+	registry.RegisterAction("aggmax", NewAggMaxFromActionConfig)
+	registry.RegisterAction("aggavg", NewAggAvgFromActionConfig)
+}
+
+type aggregateActionConfig struct {
+	config.Action `yaml:",squash"`
+	Period        time.Duration `yaml:"period"`
+}
+
+func NewAggSumFromActionConfig(g config.Generic) (a api.Action, err error) {
+	return newAggregateActionOfType("sum", g)
+}
+
+func NewAggMaxFromActionConfig(g config.Generic) (a api.Action, err error) {
+	return newAggregateActionOfType("max", g)
+}
+
+func NewAggAvgFromActionConfig(g config.Generic) (a api.Action, err error) {
+	return newAggregateActionOfType("avg", g)
+}
+
+// newAggregateActionOfType creates an aggregatoin action of desired type
+func newAggregateActionOfType(mode string, g config.Generic) (res api.Action, err error) {
+	var conf aggregateActionConfig
+	err = config.Decode(g, &conf)
+	if err != nil {
+		return nil, err
+	}
+
 	a := &aggregateAction{
 		events: make(map[string]*event),
-		period: period,
+		period: conf.Period,
 	}
 
 	switch strings.ToLower(mode) {
@@ -34,7 +65,7 @@ func NewAggregateAction(mode string, period time.Duration) (res api.Action) {
 		log.Fatalf("Invalid aggregation mode %s", mode)
 	}
 
-	return res
+	return res, nil
 }
 
 type event struct {

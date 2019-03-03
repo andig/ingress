@@ -41,8 +41,13 @@ func (m *Mapper) Process(source string, d api.Data) {
 
 // async function for publishing
 func (m *Mapper) processWire(wire *Wire, d api.Data) {
-	mapped := m.processMappings(wire, d)
-	if mapped == nil {
+	d = m.processMappings(wire, d)
+	if d == nil {
+		return
+	}
+
+	d = m.processActions(wire, d)
+	if d == nil {
 		return
 	}
 
@@ -77,4 +82,21 @@ func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
 	// not mapped
 	log.Context(log.EV, d.Name()).Debugf("no mapping - dropped")
 	return nil
+}
+
+func (m *Mapper) processActions(wire *Wire, d api.Data) api.Data {
+	if len(wire.Actions) == 0 {
+		return d
+	}
+
+	initial := d
+	for _, action := range wire.Actions {
+		d = action.Process(d)
+		if d == nil {
+			log.Context(log.EV, initial.Name()).Debugf("dropped by action")
+			return nil
+		}
+	}
+
+	return d
 }

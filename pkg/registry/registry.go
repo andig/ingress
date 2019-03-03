@@ -6,17 +6,18 @@ import (
 	"github.com/andig/ingress/pkg/log"
 )
 
-type SourceProvider func(config.Source) (api.Source, error)
-type TargetProvider func(config.Target) (api.Target, error)
 type SourceProvider func(config.Generic) (api.Source, error)
 type TargetProvider func(config.Generic) (api.Target, error)
+type ActionProvider func(config.Generic) (api.Action, error)
 
 var SourceProviders map[string]SourceProvider
 var TargetProviders map[string]TargetProvider
+var ActionProviders map[string]ActionProvider
 
 func init() {
 	SourceProviders = make(map[string]SourceProvider)
 	TargetProviders = make(map[string]TargetProvider)
+	ActionProviders = make(map[string]ActionProvider)
 }
 
 func RegisterSource(name string, provider SourceProvider) {
@@ -43,4 +44,17 @@ func RegisterTarget(name string, provider TargetProvider) {
 	}
 
 	TargetProviders[name] = provider
+}
+
+func RegisterAction(name string, provider ActionProvider) {
+	// var once sync.Once
+	// once.Do(func() {
+	// 	ActionProviders = make(map[string]api.Action)
+	// })
+
+	if _, ok := ActionProviders[name]; ok {
+		log.Fatalf("Action %s already defined", name)
+	}
+
+	ActionProviders[name] = provider
 }

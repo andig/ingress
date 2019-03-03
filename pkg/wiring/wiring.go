@@ -43,6 +43,16 @@ func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *A
 					wireMappings = append(wireMappings, wireMapping)
 				}
 
+				wireActions := make([]api.Action, 0)
+				for _, action := range wire.Actions {
+					wireAction, err := actions.ActionForName(action)
+					if err != nil {
+						log.Fatalf("cannot wire %s -> %s, undefined action %s", source, target, action)
+					}
+
+					wireActions = append(wireActions, wireAction)
+				}
+
 				log.Context(
 					log.SRC, source,
 					log.TGT, target,
@@ -52,6 +62,7 @@ func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *A
 					Source:   source,
 					Target:   target,
 					Mappings: wireMappings,
+					Actions:  wireActions,
 				}
 				wires = append(wires, wire)
 			}
