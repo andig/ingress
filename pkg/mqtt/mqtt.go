@@ -3,12 +3,19 @@ package mqtt
 import (
 	"time"
 
+	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 const defaultTimeout = 2000 * time.Millisecond
+
+type mqttConfig = struct {
+	config.Target `yaml:",squash"`
+	URL           string
+	Topic         string
+}
 
 func NewMqttClientOptions(url string, user string, password string) *mqtt.ClientOptions {
 	if url == "" {

@@ -23,8 +23,20 @@ type Publisher struct {
 	name string
 }
 
+type volkszaehlerConfig = struct {
+	config.Target `yaml:",squash"`
+	URL           string
+	Timeout       time.Duration
+}
+
 // NewFromTargetConfig creates volkszaehler data target
-func NewFromTargetConfig(c config.Target) (p api.Target, err error) {
+func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
+	var c volkszaehlerConfig
+	err = config.Decode(g, &c)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err = url.ParseRequestURI(c.URL); err != nil {
 		return p, err
 	}

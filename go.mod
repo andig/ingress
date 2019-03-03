@@ -7,6 +7,7 @@ require (
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.0.0 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/viper v1.3.1
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e

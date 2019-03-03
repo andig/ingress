@@ -21,7 +21,7 @@ type Connectors struct {
 }
 
 // NewConnectors creates the source and output system connectors
-func NewConnectors(i []config.Source, o []config.Target) *Connectors {
+func NewConnectors(i []config.Generic, o []config.Generic) *Connectors {
 	c := Connectors{
 		sources: make(map[string]api.Source),
 		targets: make(map[string]api.Target),
@@ -40,7 +40,13 @@ func NewConnectors(i []config.Source, o []config.Target) *Connectors {
 	return &c
 }
 
-func (c *Connectors) createSourceConnector(conf config.Source) {
+func (c *Connectors) createSourceConnector(g config.Generic) {
+	var conf config.Source
+	err := config.PartialDecode(g, &conf)
+	if err != nil {
+		log.Context(conf.Name).Fatal(err)
+	}
+
 	if conf.Name == "" {
 		log.Fatal("configuration error: missing source name")
 	}
@@ -50,7 +56,7 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 		log.Fatalf("Invalid source type: %s", conf.Type)
 	}
 
-	conn, err := provider(conf)
+	conn, err := provider(g)
 	if err != nil {
 		log.Context(log.TGT, conf.Name).Fatal(err)
 	}
@@ -68,7 +74,13 @@ func (c *Connectors) createSourceConnector(conf config.Source) {
 	c.sources[conf.Name] = conn
 }
 
-func (c *Connectors) createTargetConnector(conf config.Target) {
+func (c *Connectors) createTargetConnector(g config.Generic) {
+	var conf config.Target
+	err := config.PartialDecode(g, &conf)
+	if err != nil {
+		log.Context(conf.Name).Fatal(err)
+	}
+
 	if conf.Name == "" {
 		log.Fatal("configuration error: missing target name")
 	}
@@ -78,7 +90,7 @@ func (c *Connectors) createTargetConnector(conf config.Target) {
 		log.Fatalf("invalid target type: %s", conf.Type)
 	}
 
-	conn, err := provider(conf)
+	conn, err := provider(g)
 	if err != nil {
 		log.Context(log.TGT, conf.Name).Fatal(err)
 	}

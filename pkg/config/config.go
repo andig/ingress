@@ -2,34 +2,33 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
-	"time"
 
 	"github.com/andig/ingress/pkg/log"
+	"github.com/mitchellh/mapstructure"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
+type Generic map[string]interface{}
+
+type Entity struct {
+	Name string `yaml:"name"`
+	Type string `yaml:"type"`
+}
+
+type Credentials struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+}
+
 type Source struct {
-	Name     string
-	Type     string
-	URL      string
-	User     string // Credentials
-	Password string
-	Topic    string
+	Entity      `yaml:",squash"`
+	Credentials `yaml:",squash"`
 }
 
 type Target struct {
-	Name     string
-	Type     string
-	URL      string
-	Timeout  time.Duration
-	User     string // Credentials
-	Password string
-	Topic    string
-	Method   string
-	Headers  map[string]string `yaml:"headers,omitempty"`
-	Payload  string
+	Entity      `yaml:",squash"`
+	Credentials `yaml:",squash"`
 }
 
 type Wire struct {
@@ -50,33 +49,15 @@ type Mapping struct {
 }
 
 type Action struct {
-	Name   string `yaml:"name"`
-	Type   string `yaml:"type"`
-	Mode   string `yaml:"mode"`
-	Period string `yaml:"period"`
+	Entity `yaml:",squash"`
 }
 
 type Config struct {
-	Sources  []Source  `yaml:"sources"`
-	Targets  []Target  `yaml:"targets"`
+	Sources  []Generic `yaml:"sources"`
+	Targets  []Generic `yaml:"targets"`
 	Wires    []Wire    `yaml:"wires"`
 	Mappings []Mapping `yaml:"mappings"`
-	Actions  []Action  `yaml:"actions"`
-}
-
-// Load loads and parses configuration from file
-func (c *Config) Load(file string) *Config {
-	yamlFile, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatalf("cannot read config file %s (%v)", file, err)
-	}
-
-	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Fatalf("cannot parse config file (%v)", err)
-	}
-
-	return c
+	Actions  []Generic `yaml:"actions"`
 }
 
 // Dump dumps parsed config to console
@@ -89,4 +70,38 @@ func (c *Config) Dump() {
 		log.Fatalf("error (%v)", err)
 	}
 	fmt.Println(string(d))
+}
+
+// default mapstructure decoder configuration for yaml config
+func defaultDecoderConfig(target interface{}) *mapstructure.DecoderConfig {
+	return &mapstructure.DecoderConfig{
+		TagName:          "yaml",
+		DecodeHook:       mapstructure.StringToTimeDurationHookFunc(),
+		WeaklyTypedInput: true,
+		Result:           &target,
+	}
+}
+
+// decode creates decoder from config and invokes it
+func decode(conf map[string]interface{}, dc *mapstructure.DecoderConfig) error {
+	decoder, err := mapstructure.NewDecoder(dc)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return decoder.Decode(conf)
+}
+
+// PartialDecode converts a configuration map into the desired target type.
+// PartialDecode does not error on unused keys
+func PartialDecode(conf map[string]interface{}, target interface{}) error {
+	dc := defaultDecoderConfig(target)
+	return decode(conf, dc)
+}
+
+// Decode converts a configuration map into the desired target type
+// Decode errors on unused keys
+func Decode(conf map[string]interface{}, target interface{}) error {
+	dc := defaultDecoderConfig(target)
+	dc.ErrorUnused = true
+	return decode(conf, dc)
 }

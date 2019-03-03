@@ -30,7 +30,13 @@ type Subscriber struct {
 }
 
 // NewFromSourceConfig creates MQTT data source
-func NewFromSourceConfig(c config.Source) (s api.Source, err error) {
+func NewFromSourceConfig(g config.Generic) (s api.Source, err error) {
+	var c mqttConfig
+	err = config.Decode(g, &c)
+	if err != nil {
+		return nil, err
+	}
+
 	topic := c.Topic
 	if topic == "" {
 		topic = "#"

@@ -28,8 +28,22 @@ type Publisher struct {
 	client  *transport.Client
 }
 
+type httpConfig = struct {
+	config.Target `yaml:",squash"`
+	URL           string
+	Method        string
+	Headers       map[string]string `yaml:"headers,omitempty"`
+	Payload       string
+}
+
 // NewFromTargetConfig creates HTTP data target
-func NewFromTargetConfig(c config.Target) (p api.Target, err error) {
+func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
+	var c httpConfig
+	err = config.Decode(g, &c)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err = url.ParseRequestURI(c.URL); err != nil {
 		return p, err
 	}

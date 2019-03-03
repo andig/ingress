@@ -33,8 +33,20 @@ type Subscriber struct {
 	receiver  chan api.Data
 }
 
+type homieConfig = struct {
+	config.Target `yaml:",squash"`
+	URL           string
+	Topic         string
+}
+
 // NewFromSourceConfig creates Homie/MQTT data source
-func NewFromSourceConfig(c config.Source) (s api.Source, err error) {
+func NewFromSourceConfig(g config.Generic) (s api.Source, err error) {
+	var c homieConfig
+	err = config.Decode(g, &c)
+	if err != nil {
+		return nil, err
+	}
+
 	topic := c.Topic
 	if topic == "" {
 		topic = "homie"

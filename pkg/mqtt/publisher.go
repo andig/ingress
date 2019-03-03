@@ -23,7 +23,13 @@ type Publisher struct {
 }
 
 // NewFromTargetConfig creates MQTT data target
-func NewFromTargetConfig(c config.Target) (t api.Target, err error) {
+func NewFromTargetConfig(g config.Generic) (t api.Target, err error) {
+	var c mqttConfig
+	err = config.Decode(g, &c)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err = url.ParseRequestURI(c.URL); err != nil {
 		return t, err
 	}

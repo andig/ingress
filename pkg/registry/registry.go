@@ -8,6 +8,8 @@ import (
 
 type SourceProvider func(config.Source) (api.Source, error)
 type TargetProvider func(config.Target) (api.Target, error)
+type SourceProvider func(config.Generic) (api.Source, error)
+type TargetProvider func(config.Generic) (api.Target, error)
 
 var SourceProviders map[string]SourceProvider
 var TargetProviders map[string]TargetProvider
