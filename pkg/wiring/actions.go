@@ -25,12 +25,19 @@ func NewActions(c []config.Generic) *Actions {
 			log.Context(conf.Name).Fatal(err)
 		}
 
+		if conf.Name == "" {
+			log.Fatal("configuration: missing action name")
+		}
+		if conf.Type == "" {
+			log.Fatal("configuration: missing action type")
+		}
+
 		provider, ok := registry.ActionProviders[conf.Type]
 		if !ok {
-			log.Fatalf("invalid action type: %s", conf.Type)
+			log.Fatalf("configuration: invalid action type: %s", conf.Type)
 		}
 		if _, ok := a.actions[conf.Name]; ok {
-			log.Fatal("configuration error: cannot redefine action " + conf.Name)
+			log.Fatal("configuration: cannot redefine action " + conf.Name)
 		}
 		action, err := provider(generic)
 		if err != nil {
@@ -46,7 +53,7 @@ func NewActions(c []config.Generic) *Actions {
 func (a *Actions) ActionForName(name string) (api.Action, error) {
 	action, ok := a.actions[name]
 	if !ok {
-		return nil, errors.New("configuration error: undefined action " + name)
+		return nil, errors.New("configuration: undefined action " + name)
 	}
 	return action, nil
 }

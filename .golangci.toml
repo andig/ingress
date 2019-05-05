@@ -1,0 +1,10 @@
+[run]
+  deadline = "2m"
+
+[linters]
+  enable-all = true
+  disable = [
+    "gochecknoinits",
+    "gochecknoglobals",
+    "gofmt",
+  ]

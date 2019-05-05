@@ -25,7 +25,7 @@ func recoverWithError() error {
 		case error:
 			return x
 		default:
-			return errors.New("Unknown panic")
+			return errors.New("unknown panic")
 		}
 	}
 	return nil

@@ -49,15 +49,15 @@ func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
 	}
 	method := strings.ToUpper(c.Method)
 	if method == "" {
-		method = "GET"
+		method = transport.MethodGet
 	}
-	if method != "GET" && method != "POST" {
+	if method != transport.MethodGet && method != transport.MethodPost {
 		return p, errors.New("invalid method " + c.Method)
 	}
-	if method == "POST" && c.Payload == "" {
+	if method == transport.MethodPost && c.Payload == "" {
 		return p, errors.New("missing payload configuration for POST method")
 	}
-	if method == "GET" && c.Payload != "" {
+	if method == transport.MethodGet && c.Payload != "" {
 		return p, errors.New("invalid payload configuration for GET method")
 	}
 
@@ -86,7 +86,7 @@ func (p *Publisher) Publish(d api.Data) {
 	var err error
 	var payload string
 
-	if p.method == "GET" {
+	if p.method == transport.MethodGet {
 		req, err = transport.NewRequest(p.method, url, nil)
 	} else { // POST
 		payload = d.MatchPattern(p.payload)

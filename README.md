@@ -167,27 +167,27 @@ Data source are not neccessarily directly connected to physical devices. For exa
     - `method`: HTTP method (default: GET)
     - `payload`: payload template for POST requests
 
-## Mappings
+## Actions
 
-Mappings are optional in the the `ingress` configuration. A mapping translates data entity names between data source and target.
+Actions are optional in the the `ingress` configuration. An action performs an operation on the data or metadata. Operations include storing data for later use (aggregation), removing data from processing (filters) or changing metadata (mapping).
 
-Reusable mappings are defined using the mappings configuration key:
+Reusable actions are defined using the actions configuration key:
 
 ```yaml
-mappings:
+actions:
 - name: homie-to-volkszaehler
+  type: mapping
   entries:
-  - from: energy # homie property name
-    to: 014648c0-197f-11e8-9f68-afd012b00a13 # volkszaehler uuid
+    energy: 014648c0-197f-11e8-9f68-afd012b00a13 # rename homie property name to volkszaehler uuid
 ```
 
-To use a defined mapping it must be assigned to the respective wire:
+To use a defined action it must be assigned to the respective wire:
 
 ```yaml
 wires:
 - source: gosdm
   target: vz
-  mappings:
+  actions:
   - homie-to-volkszaehler
 ```
 

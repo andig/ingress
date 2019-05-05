@@ -6,6 +6,7 @@ import (
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
+	"github.com/andig/ingress/pkg/log"
 	"github.com/andig/ingress/pkg/registry"
 )
 
@@ -64,6 +65,11 @@ func (a *DropFilterAction) Process(d api.Data) api.Data {
 
 	for _, name := range a.Matches {
 		if name == dataName {
+			log.Context(
+				log.EV, d.Name(),
+				log.ACT, a.Name,
+			).Debugf("dropped")
+
 			return nil
 		}
 	}
@@ -71,6 +77,11 @@ func (a *DropFilterAction) Process(d api.Data) api.Data {
 	for _, pattern := range a.Patterns {
 		re := a.getRegEx(pattern)
 		if re.MatchString(dataName) {
+			log.Context(
+				log.EV, d.Name(),
+				log.ACT, a.Name,
+			).Debugf("dropped")
+
 			return nil
 		}
 	}
@@ -114,6 +125,11 @@ func (a *PassFilterAction) Process(d api.Data) api.Data {
 			return d
 		}
 	}
+
+	log.Context(
+		log.EV, d.Name(),
+		log.ACT, a.Name,
+	).Debugf("dropped")
 
 	return nil
 }

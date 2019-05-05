@@ -17,7 +17,7 @@ func init() {
 
 // Publisher is the MQTT data target
 type Publisher struct {
-	*MqttConnector
+	*Connector
 	name  string
 	topic string
 }
@@ -49,9 +49,9 @@ func NewPublisher(name string, topic string, mqttOptions *mqtt.ClientOptions) *P
 	}
 
 	h := &Publisher{
-		MqttConnector: &MqttConnector{},
-		name:          name,
-		topic:         topic,
+		Connector: &Connector{},
+		name:      name,
+		topic:     topic,
 	}
 
 	// connection lost handler

@@ -32,10 +32,9 @@ type Target struct {
 }
 
 type Wire struct {
-	Sources  []string `yaml:"sources"`
-	Targets  []string `yaml:"targets"`
-	Mappings []string `yaml:"mappings"`
-	Actions  []string `yaml:"actions"`
+	Source  string   `yaml:"source"`
+	Target  string   `yaml:"target"`
+	Actions []string `yaml:"actions"`
 }
 
 type MapEntry struct {
@@ -58,6 +57,11 @@ type Config struct {
 	Wires    []Wire    `yaml:"wires"`
 	Mappings []Mapping `yaml:"mappings"`
 	Actions  []Generic `yaml:"actions"`
+}
+
+// String implements Stringer for debugging
+func (a *Action) String() string {
+	return fmt.Sprintf("%s:%s", a.Name, a.Type)
 }
 
 // Dump dumps parsed config to console
