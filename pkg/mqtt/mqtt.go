@@ -44,11 +44,11 @@ func ServerFromClient(client mqtt.Client) string {
 	return server
 }
 
-type MqttConnector struct {
+type Connector struct {
 	MqttClient mqtt.Client
 }
 
-func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
+func (m *Connector) Connect(mqttClient mqtt.Client) {
 	m.MqttClient = mqttClient
 
 	// connect
@@ -57,8 +57,8 @@ func (m *MqttConnector) Connect(mqttClient mqtt.Client) {
 	}
 }
 
-// WaitForToken returns if  an mqtt operation finished within timespan
-func (m *MqttConnector) WaitForToken(token mqtt.Token, timeout time.Duration) bool {
+// WaitForToken returns if an mqtt operation finished within timespan
+func (m *Connector) WaitForToken(token mqtt.Token, timeout time.Duration) bool {
 	if token.WaitTimeout(timeout) {
 		if token.Error() == nil {
 			return true

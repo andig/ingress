@@ -1,0 +1,54 @@
+#
+# ingress configuration
+#
+
+# sources generate events
+# targets consume events
+# actions crate, modify or remove events
+# sources, targets and actions are uniquely identified by their name
+#
+# to obtain a list of available configuration options run
+#
+#   ingress -capabilities
+
+# example configuration: 
+# - connect the internal telemetry source to the volkszaehler demo http endpoint
+# - rename "Alloc" event to "Memory"
+# - remove "NumGoroutines" event
+# - aggregate data to 1 minutes
+
+sources:
+- name: metrics
+  type: telemetry
+
+targets:
+- name: demo
+  type: http
+  url: https://demo.volkszaehler.org/middleware.php/data/{name}.json
+  method: POST
+  headers:
+    Content-type: application/json
+    Accept: application/json
+  payload: >-
+    [[{timestamp:ms},{value}]]
+
+wires:
+- source: metrics
+  target: demo
+  actions:
+  - rename
+  - agg5s
+  - drop-except-averages
+
+actions:
+- name: rename
+  type: map
+  matches:
+    NumGoroutine: AvgProcesses
+  other: pass
+- name: agg5s
+  type: aggavg
+  period: 5s
+- name: drop-except-averages
+  type: passfilter
+  patterns: ^Avg

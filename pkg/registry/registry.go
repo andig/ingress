@@ -10,15 +10,9 @@ type SourceProvider func(config.Generic) (api.Source, error)
 type TargetProvider func(config.Generic) (api.Target, error)
 type ActionProvider func(config.Generic) (api.Action, error)
 
-var SourceProviders map[string]SourceProvider
-var TargetProviders map[string]TargetProvider
-var ActionProviders map[string]ActionProvider
-
-func init() {
-	SourceProviders = make(map[string]SourceProvider)
-	TargetProviders = make(map[string]TargetProvider)
-	ActionProviders = make(map[string]ActionProvider)
-}
+var SourceProviders = make(map[string]SourceProvider)
+var TargetProviders = make(map[string]TargetProvider)
+var ActionProviders = make(map[string]ActionProvider)
 
 func RegisterSource(name string, provider SourceProvider) {
 	// var once sync.Once

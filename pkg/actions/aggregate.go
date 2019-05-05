@@ -18,7 +18,7 @@ func init() {
 	registry.RegisterAction("aggavg", NewAggAvgFromActionConfig)
 }
 
-type aggregateActionConfig struct {
+type aggregateConfig struct {
 	config.Action `yaml:",squash"`
 	Period        time.Duration `yaml:"period"`
 }
@@ -37,15 +37,16 @@ func NewAggAvgFromActionConfig(g config.Generic) (a api.Action, err error) {
 
 // newAggregateActionOfType creates an aggregatoin action of desired type
 func newAggregateActionOfType(mode string, g config.Generic) (res api.Action, err error) {
-	var conf aggregateActionConfig
+	var conf aggregateConfig
 	err = config.Decode(g, &conf)
 	if err != nil {
 		return nil, err
 	}
 
 	a := &aggregateAction{
-		events: make(map[string]*event),
-		period: conf.Period,
+		aggregateConfig: conf, // embed config for Action.String()
+		events:          make(map[string]*event),
+		period:          conf.Period,
 	}
 
 	switch strings.ToLower(mode) {
@@ -75,6 +76,7 @@ type event struct {
 }
 
 type aggregateAction struct {
+	aggregateConfig
 	mux    sync.Mutex
 	events map[string]*event
 	period time.Duration
@@ -97,6 +99,12 @@ func (a *aggregateAction) process(d api.Data,
 		if d.Timestamp().After(periodEnd) || d.Timestamp().Equal(periodEnd) {
 			d := resultfunc(ev)
 			ev.lastUpdate = d.Timestamp()
+
+			log.Context(
+				log.EV, d.Name(),
+				log.ACT, a.Name,
+			).Debug("aggregate result")
+
 			return d
 		}
 	} else {
@@ -107,6 +115,11 @@ func (a *aggregateAction) process(d api.Data,
 		initfunc(ev)
 		a.events[d.Name()] = ev
 	}
+
+	log.Context(
+		log.EV, d.Name(),
+		log.ACT, a.Name,
+	).Debug("aggregate")
 
 	// either first value or time not elapsed
 	return nil
@@ -128,7 +141,10 @@ func (a *AggregateMaxAction) Process(d api.Data) api.Data {
 			if val >= ev.acc {
 				ev.acc = val
 			} else {
-				log.Context(log.EV, d.Name()).Warn("unexpected non-monotonic value in aggregation")
+				log.Context(
+					log.EV, d.Name(),
+					log.ACT, a.Name,
+				).Warn("unexpected non-monotonic value in aggregation")
 			}
 		},
 		func(ev *event) api.Data {
@@ -190,7 +206,7 @@ func (a *AggregateAvgAction) queueToAverage(q *queue.Queue) float64 {
 
 // Process implements the Action interface.
 // The first data element of the queue represents the
-// last timestamp from the previos aggregation cycle.
+// last timestamp from the previous aggregation cycle.
 func (a *AggregateAvgAction) Process(d api.Data) api.Data {
 	return a.process(d,
 		func(ev *event) {

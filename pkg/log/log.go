@@ -45,7 +45,7 @@ func Context(fields ...interface{}) *logrus.Entry {
 	// convert
 	f := make(map[string]interface{}, len(fields)/2)
 	var key, value interface{}
-	for i := 0; i+1 < len(fields); i = i + 2 {
+	for i := 0; i+1 < len(fields); i += 2 {
 		key = fields[i]
 		value = fields[i+1]
 		if s, ok := key.(string); ok {
@@ -91,9 +91,7 @@ func contextSort(keys []string) {
 		}
 	}
 
-	for i, key := range fixed {
-		keys[i] = key
-	}
+	copy(keys, fixed)
 }
 
 func Configure(lvl string) {

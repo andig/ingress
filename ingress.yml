@@ -55,37 +55,28 @@ targets:
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
-- sources: 
-  - telemetry
-  targets:
-  - influx
+- source: telemetry
+  target: influx
   actions:
+  - homie-to-volkszaehler
   - passtelemetry
-- sources: 
-  - homie
+  - agg1min
+- source: homie
 #   - mqtt-sub
 #   - telemetry
-  targets: 
-  - vz
+  target: vz
 #   - mqtt-pub
-  mappings:
-  - homie-to-volkszaehler
-  actions:
-  - agg5min
-
-# Mappings configure which source topic is mapped to which target topics
-# Mappings are reusable across wirings
-mappings:
-- name: homie-to-volkszaehler
-  entries:
-  - from: energy
-    to: 014648c0-197f-11e8-9f68-afd012b00a13
 
 ## Actions transform data submitted to a wire
 actions:
-- name: agg5min
+- name: homie-to-volkszaehler
+  type: map
+  matches:
+  - energy: 014648c0-197f-11e8-9f68-afd012b00a13
+  other: drop
+- name: agg1min
   type: aggsum
-  period: 5m
+  period: 1m
 - name: passtelemetry
   type: passfilter
   patterns: NumGo

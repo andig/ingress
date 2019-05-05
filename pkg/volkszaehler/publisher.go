@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	vz "github.com/andig/gravo/volkszaehler"
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
@@ -19,7 +20,7 @@ func init() {
 
 // Publisher is the volkszaehler data taerget
 type Publisher struct {
-	*Api
+	vz.Client
 	name string
 }
 
@@ -45,25 +46,25 @@ func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
 		c.Timeout = 1 * time.Second
 	}
 
-	api := NewAPI(c.URL, c.Timeout, false)
+	client := vz.NewClient(c.URL, c.Timeout, false)
 	p = &Publisher{
-		Api:  api,
-		name: c.Name,
+		Client: client,
+		name:   c.Name,
 	}
 	return p, nil
 }
 
-func (p *Publisher) discoverEntities(entities []Entity) {
-	for _, e := range entities {
-		log.Context(log.TGT, p.name).Printf("discovered %s (%s): %s", e.UUID, e.Type, e.Title)
-	}
-	for _, e := range entities {
-		if e.Type == TypeGroup {
-			children := p.GetEntity(e.UUID).Children
-			p.discoverEntities(children)
-		}
-	}
-}
+// func (p *Publisher) discoverEntities(entities []vz.Entity) {
+// 	for _, e := range entities {
+// 		log.Context(log.TGT, p.name).Printf("discovered %s (%s): %s", e.UUID, e.Type, e.Title)
+// 	}
+// 	for _, e := range entities {
+// 		if e.Type == string(vz.Group) {
+// 			children := p.QueryEntity(e.UUID).Children
+// 			p.discoverEntities(children)
+// 		}
+// 	}
+// }
 
 // Publish implements api.Source
 func (p *Publisher) Publish(d api.Data) {
@@ -79,7 +80,7 @@ func (p *Publisher) Publish(d api.Data) {
 		[%d,%s]
 	]`, d.Timestamp().UnixNano()/1e6, d.ValStr())
 
-	resp, err := p.Api.Post(url, payload)
+	resp, err := p.Client.Post(url, payload)
 	if err != nil {
 		log.Context(log.TGT, p.name).Errorf("send failed (%s)", err)
 		return
@@ -93,7 +94,7 @@ func (p *Publisher) Publish(d api.Data) {
 			return
 		}
 
-		var res ErrorResponse
+		var res vz.ErrorResponse
 		if err := json.Unmarshal(body, &res); err != nil {
 			log.Context(log.TGT, p.name).Errorf("decoding response failed (%s)", err)
 			return

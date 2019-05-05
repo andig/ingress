@@ -2,6 +2,7 @@ module github.com/andig/ingress
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/andig/gravo v0.2.3
 	github.com/eapache/queue v1.1.0
 	github.com/eclipse/paho.mqtt.golang v1.1.2-0.20181129145454-379fd9f99ba5
 	github.com/google/go-github v17.0.0+incompatible // indirect

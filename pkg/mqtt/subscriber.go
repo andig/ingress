@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"sync"
 
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/config"
@@ -23,10 +22,9 @@ func init() {
 
 // Subscriber is the MQTT data source
 type Subscriber struct {
-	*MqttConnector
+	*Connector
 	name      string
 	rootTopic string
-	mux       sync.Mutex
 }
 
 // NewFromSourceConfig creates MQTT data source
@@ -57,9 +55,9 @@ func NewFromSourceConfig(g config.Generic) (s api.Source, err error) {
 // NewSubscriber creates MQTT data source
 func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
-		MqttConnector: &MqttConnector{},
-		name:          name,
-		rootTopic:     StripTrailingSlash(rootTopic),
+		Connector: &Connector{},
+		name:      name,
+		rootTopic: StripTrailingSlash(rootTopic),
 	}
 
 	// connection lost handler
@@ -106,7 +104,7 @@ func (h *Subscriber) matchString(s string, pattern string) string {
 	}
 
 	matches := re.FindStringSubmatch(s)
-	if matches != nil && len(matches) == 2 {
+	if len(matches) == 2 {
 		return matches[1]
 	}
 

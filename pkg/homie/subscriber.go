@@ -24,11 +24,10 @@ func init() {
 
 // Subscriber Homie/MQTT data source
 type Subscriber struct {
-	*mq.MqttConnector
+	*mq.Connector
 	name      string
 	rootTopic string
 	qos       byte
-	mux       sync.RWMutex
 	props     *PropertySet
 	receiver  chan api.Data
 }
@@ -66,11 +65,11 @@ func NewFromSourceConfig(g config.Generic) (s api.Source, err error) {
 // NewSubscriber creates Homie/MQTT data source
 func NewSubscriber(name string, rootTopic string, mqttOptions *mqtt.ClientOptions) *Subscriber {
 	h := &Subscriber{
-		MqttConnector: &mq.MqttConnector{},
-		name:          name,
-		rootTopic:     mq.StripTrailingSlash(rootTopic),
-		qos:           1,
-		props:         NewPropertySet(),
+		Connector: &mq.Connector{},
+		name:      name,
+		rootTopic: mq.StripTrailingSlash(rootTopic),
+		qos:       1,
+		props:     NewPropertySet(),
 	}
 
 	// connection lost handler
@@ -94,7 +93,7 @@ func (h *Subscriber) Run(out chan api.Data) {
 	h.receiver = out
 
 	// discover homie devices
-	topic := fmt.Sprintf("%s/+/+/%s", h.rootTopic, propProperties)
+	topic := fmt.Sprintf("%s/+/+/%s", h.rootTopic, Properties)
 	h.MqttClient.Subscribe(topic, h.qos, func(c mqtt.Client, msg mqtt.Message) {
 		// strip $properties
 		segments := strings.Split(msg.Topic(), "/")
@@ -161,15 +160,13 @@ func (h *Subscriber) validateProperty(topic string) bool {
 	})
 
 	// wait for timeout according to specification
-	select {
-	case <-time.After(timeout):
-		mux.Lock()
-		defer mux.Unlock()
-		h.MqttClient.Unsubscribe(propertyDefinition)
-	}
+	<-time.After(timeout)
+	mux.Lock()
+	defer mux.Unlock()
+	h.MqttClient.Unsubscribe(propertyDefinition)
 
 	// parse property definition
-	if datatype, ok := def[fmt.Sprintf("%s/%s", topic, propDatatype)]; ok {
+	if datatype, ok := def[fmt.Sprintf("%s/%s", topic, DataType)]; ok {
 		return string(datatype) == "float"
 	}
 

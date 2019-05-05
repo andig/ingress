@@ -6,12 +6,16 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sort"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/andig/ingress/pkg/config"
 	"github.com/andig/ingress/pkg/log"
 	mq "github.com/andig/ingress/pkg/mqtt"
+	"github.com/andig/ingress/pkg/registry"
 	"github.com/andig/ingress/pkg/wiring"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -20,7 +24,12 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
-const DEFAULT_CONFIG = "ingress.yml"
+const DefaultConfig = "ingress.yml"
+
+const (
+	version = "unknown version"
+	commit  = "unknown commit"
+)
 
 func inject() {
 	mqttOptions := mq.NewMqttClientOptions("tcp://localhost:1883", "", "")
@@ -49,18 +58,48 @@ func checkVersion() {
 		Repository: "ingress",
 	}
 
-	if res, err := latest.Check(githubTag, tag); err == nil {
+	if res, err := latest.Check(githubTag, version); err == nil {
 		if res.Outdated {
 			log.Warnf("updates available - please upgrade to %s", res.Current)
 		}
 	}
 }
 
+func displayCapabilities() {
+	sources := make([]string, 0)
+	for k := range registry.SourceProviders {
+		sources = append(sources, k)
+	}
+	targets := make([]string, 0)
+	for k := range registry.TargetProviders {
+		targets = append(targets, k)
+	}
+	actions := make([]string, 0)
+	for k := range registry.ActionProviders {
+		actions = append(actions, k)
+	}
+	sort.Strings(sources)
+	sort.Strings(targets)
+	sort.Strings(actions)
+
+	fmt.Printf(`
+Available configuration options:
+
+	sources:	%s
+	targets:	%s
+	actions:	%s
+	`,
+		strings.Join(sources, ", "),
+		strings.Join(targets, ", "),
+		strings.Join(actions, ", "),
+	)
+}
+
 func waitForCtrlC() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	channel := make(chan os.Signal, 1)
-	signal.Notify(channel, os.Interrupt, os.Kill)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-channel
 		wg.Done()
@@ -72,16 +111,20 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "ingress"
 	app.Usage = "ingress data mapper daemon"
-	app.Version = fmt.Sprintf("%s (https://github.com/andig/ingress/commit/%s)", tag, hash)
+	app.Version = fmt.Sprintf("%s (https://github.com/andig/ingress/commit/%s)", version, commit)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Value: DEFAULT_CONFIG,
+			Value: DefaultConfig,
 			Usage: "Config file (search path ., ~ and /etc)",
 		},
 		cli.BoolFlag{
 			Name:  "dump, d",
 			Usage: "Dump parsed config",
+		},
+		cli.BoolFlag{
+			Name:  "capabilities, i",
+			Usage: "Display available capabilities",
 		},
 		cli.BoolFlag{
 			Name:  "diagnose",
@@ -100,16 +143,21 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		log.Configure(c.String("log"))
-		log.Printf("ingress v%s %s", tag, hash)
+		log.Printf("ingress %s %s", version, commit)
 
 		if c.NArg() > 0 {
 			log.Fatalf("unexpected arguments: %v", c.Args())
 		}
 
+		if c.Bool("capabilities") {
+			displayCapabilities()
+			os.Exit(0)
+		}
+
 		var conf config.Config
 		viper.SetConfigType("yaml") // or viper.SetConfigType("YAML")
 
-		if configFile := c.String("config"); configFile != DEFAULT_CONFIG {
+		if configFile := c.String("config"); configFile != DefaultConfig {
 			viper.SetConfigFile(configFile) // verbose config file
 		} else {
 			viper.SetConfigName("ingress") // name of config file (without extension)
@@ -129,14 +177,14 @@ func main() {
 
 		if c.Bool("dump") {
 			conf.Dump()
+			os.Exit(0)
 		}
 
 		go checkVersion()
 
 		connectors := wiring.NewConnectors(conf.Sources, conf.Targets)
-		mappings := wiring.NewMappings(conf.Mappings, connectors)
 		actions := wiring.NewActions(conf.Actions)
-		wires := wiring.NewWiring(conf.Wires, connectors, mappings, actions)
+		wires := wiring.NewWiring(conf.Wires, connectors, actions)
 		mapper := wiring.NewMapper(wires, connectors)
 		_ = actions
 		_ = mapper
@@ -164,5 +212,5 @@ func main() {
 		cancel() // cancel context
 	}
 
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 }

@@ -1,8 +1,11 @@
 *.pid
+*.Dockerfile
 bin
 release
 assets
-version.go
 embed.json
 embeddedassets.go
-launch.json
+.vscode
+ingress.yml
+ingress
+manifest.json

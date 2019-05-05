@@ -8,79 +8,68 @@ import (
 
 // Wire connects source and target with associated mapping
 type Wire struct {
-	Source   string
-	Target   string
-	Mappings [][]Mapping
-	Actions  []api.Action
+	Source  string
+	Target  string
+	Actions []api.Action
 }
 
-// Wiring is a list of wires
-type Wiring struct {
+// Wires is a list of wires
+type Wires struct {
 	wires []Wire
 }
 
 // NewWiring creates a system wiring, validatated against available connectors
-func NewWiring(c []config.Wire, conn *Connectors, mappings *Mappings, actions *Actions) *Wiring {
-	wires := make([]Wire, 0)
+func NewWiring(c []config.Wire, conn *Connectors, actions *Actions) *Wires {
+	wires := &Wires{
+		wires: make([]Wire, 0),
+	}
 	for _, wire := range c {
-		for _, source := range wire.Sources {
-			if _, err := conn.SourceForName(source); err != nil {
-				log.Fatalf("cannot wire %s -> *, source not defined", source)
-			}
-
-			for _, target := range wire.Targets {
-				if _, err := conn.TargetForName(target); err != nil {
-					log.Fatalf("cannot wire %s -> %s, target not defined", source, target)
-				}
-
-				wireMappings := make([][]Mapping, 0)
-				for _, mapping := range wire.Mappings {
-					wireMapping, err := mappings.MappingsForName(mapping)
-					if err != nil {
-						log.Fatalf("cannot wire %s -> %s, undefined mapping %s", source, target, mapping)
-					}
-
-					wireMappings = append(wireMappings, wireMapping)
-				}
-
-				wireActions := make([]api.Action, 0)
-				for _, action := range wire.Actions {
-					wireAction, err := actions.ActionForName(action)
-					if err != nil {
-						log.Fatalf("cannot wire %s -> %s, undefined action %s", source, target, action)
-					}
-
-					wireActions = append(wireActions, wireAction)
-				}
-
-				log.Context(
-					log.SRC, source,
-					log.TGT, target,
-				).Printf("creating wire")
-
-				wire := Wire{
-					Source:   source,
-					Target:   target,
-					Mappings: wireMappings,
-					Actions:  wireActions,
-				}
-				wires = append(wires, wire)
-			}
+		if wire.Source == "" {
+			log.Fatalf("configuration error: missing wire source (%+v)", wire)
 		}
+		if _, err := conn.SourceForName(wire.Source); err != nil {
+			log.Fatalf("cannot wire source %s -> *, source not defined", wire.Source)
+		}
+
+		if wire.Target == "" {
+			log.Fatalf("configuration error: missing wire target (%+v)", wire)
+		}
+		if _, err := conn.TargetForName(wire.Target); err != nil {
+			log.Fatalf("cannot wire target * -> %s, target not defined", wire.Target)
+		}
+
+		wireActions := make([]api.Action, 0)
+		for _, action := range wire.Actions {
+			wireAction, err := actions.ActionForName(action)
+			if err != nil {
+				log.Fatalf("cannot wire %s -> %s with action %s, action not defined", wire.Source, wire.Target, action)
+			}
+
+			wireActions = append(wireActions, wireAction)
+		}
+
+		log.Context(
+			log.SRC, wire.Source,
+			log.TGT, wire.Target,
+		).Printf("creating wire")
+
+		w := Wire{
+			Source:  wire.Source,
+			Target:  wire.Target,
+			Actions: wireActions,
+		}
+		wires.wires = append(wires.wires, w)
 	}
 
-	if len(wires) == 0 {
+	if len(wires.wires) == 0 {
 		log.Println("no wires created - please check your configuration")
 	}
 
-	wiring := &Wiring{
-		wires: wires,
-	}
-	return wiring
+	return wires
 }
 
 // WiresForSource returns all wires connected to given source
-func (w *Wiring) WiresForSource(source string) []Wire {
+func (w *Wires) WiresForSource(source string) []Wire {
 	res := make([]Wire, 0)
 
 	for _, wire := range w.wires {

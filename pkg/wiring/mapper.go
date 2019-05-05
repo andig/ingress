@@ -1,23 +1,21 @@
 package wiring
 
 import (
-	"strings"
-
 	"github.com/andig/ingress/pkg/api"
 	"github.com/andig/ingress/pkg/log"
 )
 
 // Mapper handles data transfer over wires
 type Mapper struct {
-	wiring     *Wiring
+	wires      *Wires
 	connectors *Connectors
 }
 
 // NewMapper creates a data mapper that is able to Process() input messages
 // by sending them to configured output wires
-func NewMapper(wiring *Wiring, conn *Connectors) *Mapper {
+func NewMapper(wires *Wires, conn *Connectors) *Mapper {
 	mapper := &Mapper{
-		wiring:     wiring,
+		wires:      wires,
 		connectors: conn,
 	}
 	return mapper
@@ -27,7 +25,8 @@ func NewMapper(wiring *Wiring, conn *Connectors) *Mapper {
 func (m *Mapper) Process(source string, d api.Data) {
 	d.Normalize() // normalize data before sending to any target
 
-	for _, wire := range m.wiring.WiresForSource(source) {
+	for _, wire := range m.wires.WiresForSource(source) {
+		wire := wire // pin
 		log.Context(
 			log.EV, d.Name(),
 			log.SRC, wire.Source,
@@ -41,11 +40,6 @@ func (m *Mapper) Process(source string, d api.Data) {
 
 // async function for publishing
 func (m *Mapper) processWire(wire *Wire, d api.Data) {
-	d = m.processMappings(wire, d)
-	if d == nil {
-		return
-	}
-
 	d = m.processActions(wire, d)
 	if d == nil {
 		return
@@ -60,40 +54,19 @@ func (m *Mapper) processWire(wire *Wire, d api.Data) {
 	target.Publish(d)
 }
 
-func (m *Mapper) processMappings(wire *Wire, d api.Data) api.Data {
-	if len(wire.Mappings) == 0 {
-		return d
-	}
-
-	dataName := strings.ToLower(d.Name())
-	for mappingName, mapping := range wire.Mappings {
-		for _, entry := range mapping {
-			if dataName == strings.ToLower(entry.From) {
-				log.Context(
-					log.EV, d.Name(),
-					"mapping", mappingName,
-				).Debugf("mapping %s -> %s ", d.Name(), entry.To)
-				d.SetName(entry.To)
-				return d
-			}
-		}
-	}
-
-	// not mapped
-	log.Context(log.EV, d.Name()).Debugf("no mapping - dropped")
-	return nil
-}
-
 func (m *Mapper) processActions(wire *Wire, d api.Data) api.Data {
 	if len(wire.Actions) == 0 {
 		return d
 	}
 
-	initial := d
+	// initial := d
 	for _, action := range wire.Actions {
 		d = action.Process(d)
 		if d == nil {
-			log.Context(log.EV, initial.Name()).Debugf("dropped by action")
+			// log.Context(
+			// 	log.EV, initial.Name(),
+			// 	// log.ACT, action.Name,
+			// ).Debugf("dropped")
 			return nil
 		}
 	}
