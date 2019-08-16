@@ -27,46 +27,46 @@ The `ingress` design goals are:
 
 ## Quickstart
 
-The following example describes how to connect [GoSDM] with [Volkszähler] for for data logging purposes.
+The following example describes how to connect [MBMD] with [Volkszähler] for for data logging purposes.
 
 ### Prerequisites
 
 - MQTT server like mosquitto. For testing purposes one of the available [public MQTT servers](https://github.com/mqtt/mqtt.github.io/wiki/public_brokers) can be used.
-- [GoSDM] installed with Homie protocol enabled and connected to MQTT
+- [MBMD] installed with Homie protocol enabled and connected to MQTT
 - `ingress` installed
 
 ### Overview
 
 This use case requires to connect the following components:
 
-    +-------+      +-----------+      +---------+      +-------------+
-    | GoSDM | ---> | Mosquitto | ---> | Ingress | ---> | Volkszähler |
-    +-------+      +-----------+      +---------+      +-------------+
+    +--------+      +-----------+      +---------+      +-------------+
+    |  MBMD  | ---> | Mosquitto | ---> | Ingress | ---> | Volkszähler |
+    +--------+      +-----------+      +---------+      +-------------+
 
 ### Configuration
 
 For this scenario `ingress` needs to connect mosquitto to [Volkszähler]. 
 
-Since [GoSDM] is able to publish ModBus readings to MQTT, it is easiest to connect MQTT as input data *source* to an outbound *target* using HTTP as protocol for [Volkszähler]:
+Since [MBMD] is able to publish ModBus readings to MQTT, it is easiest to connect MQTT as input data *source* to an outbound *target* using HTTP as protocol for [Volkszähler]:
 
 ```yaml
 sources:
-- name: gosdm
+- name: mbmd
   type: homie
 targets:
 - name: vz
   type: http
 wires:
-- source: gosdm
+- source: mbmd
   target: vz
 ```
 
-The configuration defines the data source and target with `wires` connecting the source `gosdm` to target `vz`.
+The configuration defines the data source and target with `wires` connecting the source `mbmd` to target `vz`.
 
-For the data source- an MQTT server speaking the [Homie] protocol supported by [GoSDM]- we'll need to add the server address (here assuming [mosquitto] running on localhost):
+For the data source- an MQTT server speaking the [Homie] protocol supported by [MBMD]- we'll need to add the server address (here assuming [mosquitto] running on localhost):
 
 ```yaml
-- name: gosdm
+- name: mbmd
   type: homie
   url: tcp://localhost:1883
 ```
@@ -143,7 +143,7 @@ The `ingress` data mapper architecture consists of data *sources* being mapped t
 Using configured *wires*, data is forwarded to output *targets*. *Wires* define which input and output sources/targets are connected. 
 *Mappings* define which rules are applied for the connection. Any number of input *sources* can be connected to any number of output *targets* while using multiple mappings.
 
-Data source are not neccessarily directly connected to physical devices. For example, connecting [GoSDM] to `ingress` works best using an MQTT server.
+Data source are not neccessarily directly connected to physical devices. For example, connecting [MBMD] to `ingress` works best using an MQTT server.
 
 ## Data Sources
 
@@ -152,7 +152,7 @@ Data source are not neccessarily directly connected to physical devices. For exa
 - `mqtt`: MQTT server
     - `url`: server url including schema and port (default: tcp://localhost:1883)
     - `topic`: topic (default: #)
-- `homie`: MQTT server with connected [Homie] clients like [GoSDM] (as of v0.8)
+- `homie`: MQTT server with connected [Homie] clients like [MBMD] (as of v0.8)
     - `url`: server url including schema and port (default: tcp://localhost:1883)
     - `topic`: homie root topic (default: homie)
 
@@ -185,7 +185,7 @@ To use a defined action it must be assigned to the respective wire:
 
 ```yaml
 wires:
-- source: gosdm
+- source: mbmd
   target: vz
   actions:
   - homie-to-volkszaehler
@@ -223,5 +223,5 @@ one or more mappings assigned | All assigned mappings are processed in order or 
 [Volkszähler]: https://volkszaehler.org
 [Homie]: https://homieiot.github.io
 [Mosquitto]: https://mosquitto.org
-[GoSDM]: https://github.com/gonium/gosdm630
+[MBMD]: https://github.com/volkszaehler/mbmd
 [GoElster]: https://github.com/andig/goelster

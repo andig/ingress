@@ -14,6 +14,13 @@ import (
 	"github.com/andig/ingress/pkg/registry"
 )
 
+// PostResponse is the middleware response to POST requests
+type PostResponse struct {
+	Version   string       `json:"version"`
+	Exception vz.Exception `json:"exception"`
+	Rows      int          `json:"rows"`
+}
+
 func init() {
 	registry.RegisterTarget("volkszaehler", NewFromTargetConfig)
 }
@@ -46,7 +53,7 @@ func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
 		c.Timeout = 1 * time.Second
 	}
 
-	client := vz.NewClient(c.URL, c.Timeout, false)
+	client := vz.NewClient(c.URL, &c.Timeout, false)
 	p = &Publisher{
 		Client: client,
 		name:   c.Name,
@@ -85,21 +92,20 @@ func (p *Publisher) Publish(d api.Data) {
 		log.Context(log.TGT, p.name).Errorf("send failed (%s)", err)
 		return
 	}
-	defer resp.Body.Close() // close body after checking for error
+	defer resp.Close() // close body after checking for error
 
-	if resp.StatusCode != 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Context(log.TGT, p.name).Errorf("reading response failed (%s)", err)
-			return
-		}
+	body, err := ioutil.ReadAll(resp)
+	if err != nil {
+		log.Context(log.TGT, p.name).Errorf("reading response failed (%s)", err)
+		return
+	}
 
-		var res vz.ErrorResponse
-		if err := json.Unmarshal(body, &res); err != nil {
-			log.Context(log.TGT, p.name).Errorf("decoding response failed (%s)", err)
-			return
-		}
-
-		log.Context(log.TGT, p.name).Errorf("send failed (%s)", res.Exception.Message)
+	var res PostResponse
+	if err := json.Unmarshal(body, &res); err != nil {
+		log.Context(log.TGT, p.name).Errorf("decoding response failed (%s)", err)
+		return
+	}
+	if res.Rows != 1 {
+		log.Context(log.TGT, p.name).Errorf("unexpected response (%s)", body)
 	}
 }

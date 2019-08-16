@@ -9,9 +9,9 @@
 sources:
 - name: telemetry
   type: telemetry
-- name: homie
-  type: homie
-  url: tcp://localhost:1883
+# - name: homie
+#   type: homie
+#   url: tcp://localhost:1883
 # - name: mqtt-sub
 #   type: mqtt
 #   url: tcp://localhost:1883
@@ -22,61 +22,67 @@ sources:
 # - volkszaehler-push (planned)
 
 targets:
+# - name: vz-http
+#   type: http
+# #   url: https://demo.volkszaehler.org/middleware.php/data/{name}.json
+#   url: https://demo.volkszaehler.org/middleware.php/data.json
+# #   url: http://localhost/htdocs/vz/middleware.php
+# #   url: http://localhost
+#   method: POST
+#   headers:
+#     Content-type: application/json
+#     Accept: application/json
+#   payload: >-
+#     [[{timestamp:ms},{value}]]
 - name: vz
-  type: http
-  url: https://demo.volkszaehler.org/middleware.php/data/{name}.json
-#   url: http://localhost
-  method: POST
-  headers:
-    Content-type: application/json
-    Accept: application/json
-  payload: >-
-    [[{timestamp:ms},{value}]]
+  type: volkszaehler
+  url: https://demo.volkszaehler.org/middleware.php
+#   url: https://demo.volkszaehler.org/middleware.php/data.json
 # - name: vz
 #   type: volkszaehler
 #   url: https://demo.volkszaehler.org/
-- name: mqtt-pub
-  type: mqtt
-  url: tcp://localhost:1883
-  topic: telemetry/{name}
-- name: influx
-  type: influxdb
-  # url: http://nas.fritz.box:9999
-  url: http://localhost:8087
-  database: volkszaehler
-  measurement: "{name}"
-  precision: ms
-  # fields:
-  #   timestamp: "{timestamp:ns}" # use timestamp with ns precision as "timestamp" field
-  #   value: "{value}" # use value as "value" field
-  tags:
-    source: ingress # mark as coming from ingress
-    title: "{name}" # use name as title tag
+# - name: mqtt-pub
+#   type: mqtt
+#   url: tcp://localhost:1883
+#   topic: telemetry/{name}
+# - name: influx
+#   type: influxdb
+#   # url: http://nas.fritz.box:9999
+#   url: http://localhost:8087
+#   database: volkszaehler
+#   measurement: "{name}"
+#   precision: ms
+#   # fields:
+#   #   timestamp: "{timestamp:ns}" # use timestamp with ns precision as "timestamp" field
+#   #   value: "{value}" # use value as "value" field
+#   tags:
+#     source: ingress # mark as coming from ingress
+#     title: "{name}" # use name as title tag
 
 # Wires connect data sources with targets. Mapping rules can be assigned to a wire.
 wires:
 - source: telemetry
-  target: influx
+  target: vz
   actions:
   - homie-to-volkszaehler
-  - passtelemetry
-  - agg1min
-- source: homie
-#   - mqtt-sub
-#   - telemetry
-  target: vz
-#   - mqtt-pub
+#  - passtelemetry
+#  - agg1min
+# - source: homie
+# #   - mqtt-sub
+# #   - telemetry
+#   target: vz
+# #   - mqtt-pub
 
 ## Actions transform data submitted to a wire
 actions:
 - name: homie-to-volkszaehler
   type: map
   matches:
-  - energy: 014648c0-197f-11e8-9f68-afd012b00a13
-  other: drop
-- name: agg1min
-  type: aggsum
-  period: 1m
-- name: passtelemetry
-  type: passfilter
-  patterns: NumGo
+  - NumGoroutine: 014648c0-197f-11e8-9f68-afd012b00a13
+#  other: drop
+#- name: agg1min
+#  type: aggsum
+#  period: 1m
+#- name: passtelemetry
+#  type: passfilter
+#  patterns: NumGo
