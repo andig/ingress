@@ -15,11 +15,6 @@ var TargetProviders = make(map[string]TargetProvider)
 var ActionProviders = make(map[string]ActionProvider)
 
 func RegisterSource(name string, provider SourceProvider) {
-	// var once sync.Once
-	// once.Do(func() {
-	// 	SourceProviders = make(map[string]api.Source)
-	// })
-
 	if _, ok := SourceProviders[name]; ok {
 		log.Fatalf("Source %s already defined", name)
 	}
@@ -28,11 +23,6 @@ func RegisterSource(name string, provider SourceProvider) {
 }
 
 func RegisterTarget(name string, provider TargetProvider) {
-	// var once sync.Once
-	// once.Do(func() {
-	// 	TargetProviders = make(map[string]api.Target)
-	// })
-
 	if _, ok := TargetProviders[name]; ok {
 		log.Fatalf("Target %s already defined", name)
 	}
@@ -41,11 +31,6 @@ func RegisterTarget(name string, provider TargetProvider) {
 }
 
 func RegisterAction(name string, provider ActionProvider) {
-	// var once sync.Once
-	// once.Do(func() {
-	// 	ActionProviders = make(map[string]api.Action)
-	// })
-
 	if _, ok := ActionProviders[name]; ok {
 		log.Fatalf("Action %s already defined", name)
 	}

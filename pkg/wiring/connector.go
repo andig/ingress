@@ -53,14 +53,10 @@ func (c *Connectors) createSourceConnector(g config.Generic) {
 
 	provider, ok := registry.SourceProviders[conf.Type]
 	if !ok {
-		log.Fatalf("Invalid source type: %s", conf.Type)
+		log.Fatalf("invalid source type: %s", conf.Type)
 	}
 
 	conn, err := provider(g)
-	if err != nil {
-		log.Context(log.TGT, conf.Name).Fatal(err)
-	}
-
 	if err != nil {
 		log.Context(log.SRC, conf.Name).Fatal(err)
 	}
@@ -126,7 +122,6 @@ func (c *Connectors) ApplyTelemetry() {
 				}
 			}
 
-			// log.Println("activated metrics collection")
 			log.Println("enabled metrics collection")
 			return
 		}
