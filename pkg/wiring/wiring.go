@@ -62,7 +62,7 @@ func NewWiring(c []config.Wire, conn *Connectors, actions *Actions) *Wires {
 	}
 
 	if len(wires.wires) == 0 {
-		log.Println("no wires created - please check your configuration")
+		log.Fatal("no wires created - please check your configuration")
 	}
 
 	return wires

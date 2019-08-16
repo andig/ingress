@@ -15,7 +15,7 @@ type MetricProvider interface {
 
 type Telemetry struct {
 	providers []MetricProvider
-	mux       sync.Mutex
+	sync.Mutex
 }
 
 func NewTelemetry() *Telemetry {
@@ -28,8 +28,8 @@ func NewTelemetry() *Telemetry {
 }
 
 func (h *Telemetry) AddProvider(provider MetricProvider) {
-	h.mux.Lock()
-	defer h.mux.Unlock()
+	h.Lock()
+	defer h.Unlock()
 
 	// don't add providers twice
 	for _, p := range h.providers {

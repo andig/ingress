@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -13,13 +14,6 @@ import (
 	"github.com/andig/ingress/pkg/log"
 	"github.com/andig/ingress/pkg/registry"
 )
-
-// PostResponse is the middleware response to POST requests
-type PostResponse struct {
-	Version   string       `json:"version"`
-	Exception vz.Exception `json:"exception"`
-	Rows      int          `json:"rows"`
-}
 
 func init() {
 	registry.RegisterTarget("volkszaehler", NewFromTargetConfig)
@@ -49,29 +43,18 @@ func NewFromTargetConfig(g config.Generic) (p api.Target, err error) {
 		return p, err
 	}
 
-	if c.Timeout == 0 {
-		c.Timeout = 1 * time.Second
+	httpClient := http.Client{}
+	if c.Timeout != 0 {
+		httpClient.Timeout = c.Timeout
 	}
 
-	client := vz.NewClient(c.URL, &c.Timeout, false)
+	client := vz.NewClient(c.URL, &httpClient, false)
 	p = &Publisher{
 		Client: client,
 		name:   c.Name,
 	}
 	return p, nil
 }
-
-// func (p *Publisher) discoverEntities(entities []vz.Entity) {
-// 	for _, e := range entities {
-// 		log.Context(log.TGT, p.name).Printf("discovered %s (%s): %s", e.UUID, e.Type, e.Title)
-// 	}
-// 	for _, e := range entities {
-// 		if e.Type == string(vz.Group) {
-// 			children := p.QueryEntity(e.UUID).Children
-// 			p.discoverEntities(children)
-// 		}
-// 	}
-// }
 
 // Publish implements api.Source
 func (p *Publisher) Publish(d api.Data) {
@@ -100,12 +83,11 @@ func (p *Publisher) Publish(d api.Data) {
 		return
 	}
 
-	var res PostResponse
+	var res vz.PostDataResponse
 	if err := json.Unmarshal(body, &res); err != nil {
 		log.Context(log.TGT, p.name).Errorf("decoding response failed (%s)", err)
 		return
-	}
-	if res.Rows != 1 {
+	} else if res.Rows != 1 {
 		log.Context(log.TGT, p.name).Errorf("unexpected response (%s)", body)
 	}
 }

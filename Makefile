@@ -20,7 +20,7 @@ test: clean
 
 build:
 	@echo Version: $(VERSION) $(BUILD_DATE)
-	go build -v -ldflags '-X "main.version=${VERSION}" -X "main.commit=${SHA}" -X "main.date=${BUILD_DATE}"' github.com/andig/ingress/cmd/ingress
+	go build -v -ldflags '-X "github.com/andig/ingress/cmd.version=${VERSION}" -X "github.com/andig/ingress/cmd.commit=${SHA}" -X "github.com/andig/ingress/cmd.date=${BUILD_DATE}"' github.com/andig/ingress/cmd/ingress
 
 run:
 	go run -race github.com/andig/ingress/cmd/ingress

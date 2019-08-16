@@ -134,14 +134,11 @@ func run(cmd *cobra.Command, args []string) {
 	actions := wiring.NewActions(conf.Actions)
 	wires := wiring.NewWiring(conf.Wires, connectors, actions)
 	mapper := wiring.NewMapper(wires, connectors)
-	_ = actions
-	_ = mapper
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go connectors.Run(ctx, mapper)
 
 	if test, _ := pflags.GetBool("test"); test {
-		time.Sleep(time.Second)
 		inject()
 	}
 
@@ -151,7 +148,7 @@ func run(cmd *cobra.Command, args []string) {
 				time.Sleep(time.Second)
 				var memstats runtime.MemStats
 				runtime.ReadMemStats(&memstats)
-				log.Debugf("%db\n", memstats.Alloc)
+				log.Debugf("memory: %db\n", memstats.Alloc)
 			}
 		}()
 	}

@@ -77,7 +77,7 @@ type event struct {
 
 type aggregateAction struct {
 	aggregateConfig
-	mux    sync.Mutex
+	sync.Mutex
 	events map[string]*event
 	period time.Duration
 }
@@ -87,8 +87,8 @@ func (a *aggregateAction) process(d api.Data,
 	updatefunc func(*event),
 	resultfunc func(*event) api.Data,
 ) api.Data {
-	a.mux.Lock()
-	defer a.mux.Unlock()
+	a.Lock()
+	defer a.Unlock()
 
 	if ev, ok := a.events[d.Name()]; ok {
 		// update the value

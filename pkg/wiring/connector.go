@@ -15,7 +15,7 @@ import (
 
 // Connectors manages data sources and targets
 type Connectors struct {
-	mux     sync.Mutex
+	sync.Mutex
 	sources map[string]api.Source
 	targets map[string]api.Target
 }
@@ -65,8 +65,8 @@ func (c *Connectors) createSourceConnector(g config.Generic) {
 		log.Context(log.SRC, conf.Name).Fatal(err)
 	}
 
-	c.mux.Lock()
-	defer c.mux.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if _, err := c.SourceForName(conf.Name); err == nil {
 		log.Fatal("configuration error: cannot redefine source " + conf.Name)
@@ -95,8 +95,8 @@ func (c *Connectors) createTargetConnector(g config.Generic) {
 		log.Context(log.TGT, conf.Name).Fatal(err)
 	}
 
-	c.mux.Lock()
-	defer c.mux.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if _, err := c.TargetForName(conf.Name); err == nil {
 		log.Fatal("configuration error: cannot redefine target " + conf.Name)
@@ -106,8 +106,8 @@ func (c *Connectors) createTargetConnector(g config.Generic) {
 
 // ApplyTelemetry wires metric providers to the Telemetry instance
 func (c *Connectors) ApplyTelemetry() {
-	c.mux.Lock()
-	defer c.mux.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	for _, Source := range c.sources {
 		// find telemetry instance
