@@ -11,7 +11,7 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20190124185755-16c852ea613f
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/sirupsen/logrus v1.2.0
-	github.com/spf13/viper v1.3.1
+	github.com/spf13/viper v1.4.0
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
