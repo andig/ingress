@@ -17,7 +17,7 @@ const (
 	TGT = "target" // target
 )
 
-var logger *logrus.Logger = logrus.StandardLogger()
+var logger = logrus.StandardLogger()
 
 func convertMap(fields ...interface{}) []interface{} {
 	if len(fields) != 1 {
