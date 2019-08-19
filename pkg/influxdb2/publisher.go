@@ -47,15 +47,13 @@ func NewFromTargetConfig(g config.Generic) (api.Target, error) {
 		return nil, err
 	}
 
-	options := []influx.Option{influx.WithAddress(c.URL)}
-	if c.Token != "" {
-		options = append(options, influx.WithToken(c.Token))
-	} else {
+	httpClient := &http.Client{Timeout: writeTimeout}
+	options := []influx.Option{influx.WithHTTPClient(httpClient)}
+	if c.Token == "" {
 		options = append(options, influx.WithUserAndPass(c.User, c.Password))
 	}
 
-	http := &http.Client{Timeout: writeTimeout}
-	client, err := influx.New(http, options...)
+	client, err := influx.New(c.URL, c.Token, options...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating client: %v", err)
 	}
@@ -83,10 +81,14 @@ func (p *Publisher) Publish(d api.Data) {
 		p.dataToPoint(d),
 	}
 
-	if err := p.client.Write(context.Background(), p.Bucket, p.Org, metrics...); err != nil {
+	if n, err := p.client.Write(context.Background(), p.Bucket, p.Org, metrics...); err != nil {
 		log.Context(
 			log.TGT, p.Name,
 		).Error(err)
+	} else {
+		log.Context(
+			log.TGT, p.Name,
+		).Debugf("wrote %d records", n)
 	}
 }
 
