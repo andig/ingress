@@ -8,6 +8,7 @@ import (
 	_ "github.com/andig/ingress/pkg/homie"
 	_ "github.com/andig/ingress/pkg/http"
 	_ "github.com/andig/ingress/pkg/influxdb"
+	_ "github.com/andig/ingress/pkg/influxdb2"
 	_ "github.com/andig/ingress/pkg/mqtt"
 	_ "github.com/andig/ingress/pkg/volkszaehler"
 )
