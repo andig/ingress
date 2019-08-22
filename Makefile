@@ -1,4 +1,4 @@
-.PHONY: default clean checks test build run mosquitto-clean publish-images test-release
+.PHONY: default lint test build run mosquitto-clean publish-images test-release release
 
 TAG_NAME := $(shell git tag -l --contains HEAD)
 SHA := $(shell git rev-parse --short HEAD)
@@ -7,15 +7,12 @@ VERSION := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 BUILD_DATE := $(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
 
-default: clean checks test build
+default: lint test build
 
-clean:
-	rm -rf dist/ cover.out
-
-checks:
+lint:
 	golangci-lint run
 
-test: clean
+test:
 	go test -v -cover ./...
 
 build:
@@ -35,3 +32,6 @@ publish-images:
 
 test-release:
 	goreleaser --snapshot --skip-publish --rm-dist
+
+release:
+	goreleaser --rm-dist

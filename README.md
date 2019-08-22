@@ -210,6 +210,17 @@ one or more mappings assigned | All assigned mappings are processed in order or 
 
    to show what configuration ingress understood. If it looks correct feel free to open an issue. Always attach your configuration to the issue.
 
+2. `ingress` fails with strange error during startup
+
+    You're seing messages like this:
+
+        * 'fields[0][value]' expected type 'string', got unconvertible type 'map[interface {}]interface {}'
+        * 'tags[0][type]' expected type 'string', got unconvertible type 'map[interface {}]interface {}'  target=influxdb
+        exit status 1
+
+    `ingress` failed to parse the configuration into the expected format (in this case, list entries for `fields.value` and `tags.type`). 
+    When this happens make sure to make clear what data type the value has, e.g. by surrounding strings with `"quotes"`.
+
 ## Backlog
 
 - data aggregation
