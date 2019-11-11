@@ -1,0 +1,8 @@
+linters:
+  enable-all: true
+  disable:
+  - gochecknoinits
+  - gochecknoglobals
+  - gofmt
+  - dupl
+  - wsl
