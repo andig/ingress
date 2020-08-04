@@ -14,7 +14,7 @@ RUN apk update && apk add --no-cache git ca-certificates tzdata alpine-sdk && up
 RUN adduser -D -g '' appuser
 
 # Populate and persist modules
-WORKDIR /go/src/github.com/andig/ingress
+WORKDIR /build
 
 ENV GO111MODULE=on
 COPY go.* ./
@@ -34,7 +34,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 
 # Copy our static executable
-COPY --from=builder /go/src/github.com/andig/ingress/ingress /usr/bin/ingress
+COPY --from=builder /build/ingress /usr/bin/ingress
 
 # Use an unprivileged user.
 USER appuser
