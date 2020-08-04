@@ -34,7 +34,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 
 # Copy our static executable
-COPY --from=builder /go/src/github.com/andig/ingress/ingress /usr/bin/ingress
+COPY --from=builder /go/src/github.com/andig/ingress /usr/bin/ingress
 
 # Use an unprivileged user.
 USER appuser
