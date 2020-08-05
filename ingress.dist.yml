@@ -9,7 +9,7 @@
 #
 # to obtain a list of available configuration options run
 #
-#   ingress -capabilities
+#   ingress --capabilities
 
 # example configuration: 
 # - connect the internal telemetry source to the volkszaehler demo http endpoint
