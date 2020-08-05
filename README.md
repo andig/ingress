@@ -176,8 +176,8 @@ Reusable actions are defined using the actions configuration key:
 ```yaml
 actions:
 - name: homie-to-volkszaehler
-  type: mapping
-  entries:
+  type: map
+  matches:
     energy: 014648c0-197f-11e8-9f68-afd012b00a13 # rename homie property name to volkszaehler uuid
 ```
 
