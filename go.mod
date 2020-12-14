@@ -1,7 +1,7 @@
 module github.com/andig/ingress
 
 require (
-	github.com/andig/gravo v0.4.0
+	github.com/andig/gravo v0.4.4
 	github.com/eapache/queue v1.1.0
 	github.com/eclipse/paho.mqtt.golang v1.3.0
 	github.com/google/go-github v17.0.0+incompatible // indirect
